@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Comercial</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#f4f3ef;min-height:100vh;color:#1a1a1a}
+  .screen{display:none}.screen.active{display:block}
+  .login-wrap{max-width:360px;margin:0 auto;padding:4rem 1rem}
+  .card{background:#fff;border:1px solid #e0e0db;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem}
+  .field{margin-bottom:12px}
+  label{font-size:13px;color:#555;display:block;margin-bottom:4px}
+  input,select{width:100%;font-size:14px;padding:9px 12px;border:1px solid #d0d0ca;border-radius:8px;background:#fff;color:#1a1a1a;font-family:inherit;outline:none;transition:border-color .15s}
+  input:focus,select:focus{border-color:#185FA5}
+  .btn{background:#1a1a1a;color:#fff;border:none;padding:12px 24px;border-radius:8px;font-size:14px;cursor:pointer;font-weight:700;width:100%;font-family:inherit}
+  .btn:hover{opacity:.85}
+  .btn-sm{background:none;border:1px solid #d0d0ca;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;color:#555;font-family:inherit}
+  .btn-sm:hover{background:#f4f3ef}
+  .err{color:#A32D2D;font-size:12px;margin-top:8px;padding:8px 12px;background:#FCEBEB;border-radius:6px;display:none}
+  .dash{padding:1.25rem}
+  .dash-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
+  .dash-title{font-size:20px;font-weight:700}
+  .dash-sub{font-size:13px;color:#666;margin-top:2px}
+  .admin-badge{display:inline-flex;align-items:center;gap:5px;background:#EEEDFE;color:#3C3489;font-size:11px;padding:3px 10px;border-radius:6px;font-weight:700;margin-left:8px;vertical-align:middle}
+  .tabs{display:flex;border-bottom:1px solid #e0e0db;margin-bottom:1.5rem}
+  .tab{padding:9px 16px;font-size:14px;cursor:pointer;border:none;background:none;color:#888;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:inherit}
+  .tab.active{color:#1a1a1a;border-bottom-color:#1a1a1a;font-weight:700}
+  .section{display:none}.section.active{display:block}
+  .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:1.5rem}
+  .metric{background:#fff;border:1px solid #e0e0db;border-radius:10px;padding:.875rem;text-align:center}
+  .metric .val{font-size:28px;font-weight:700}
+  .metric .lbl{font-size:11px;color:#888;margin-top:3px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  .section-title{font-size:14px;font-weight:700;margin-bottom:1rem}
+  .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:6px;font-weight:700}
+  .badge-green{background:#EAF3DE;color:#3B6D11}
+  .badge-red{background:#FCEBEB;color:#A32D2D}
+  .badge-blue{background:#E6F1FB;color:#185FA5}
+  .badge-amber{background:#FAEEDA;color:#854F0B}
+  .badge-gray{background:#F1EFE8;color:#5F5E5A}
+  .badge-purple{background:#EEEDFE;color:#3C3489}
+  .badge-teal{background:#E1F5EE;color:#0F6E56}
+  .empty{text-align:center;padding:2.5rem;color:#999;font-size:14px}
+  .avatar{width:32px;height:32px;border-radius:50%;background:#E6F1FB;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#185FA5;flex-shrink:0}
+  .bar-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f0f0ee}
+  .bar-row:last-child{border-bottom:none}
+  .bar-track{flex:1;height:4px;background:#f0f0ee;border-radius:2px}
+  .bar-fill{height:4px;border-radius:2px}
+  .filter-bar{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;font-size:13px;color:#666}
+  .filter-bar select{width:auto;padding:6px 10px}
+  .tbl-hdr,.tbl-row{display:grid;gap:8px;grid-template-columns:90px 1fr 80px 65px 110px 100px 80px}
+  .tbl-hdr{padding:8px 0;border-bottom:1px solid #d0d0ca;font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em}
+  .tbl-row{padding:10px 0;border-bottom:1px solid #f0f0ee;font-size:13px;align-items:start}
+  .tbl-row:last-child{border-bottom:none}
+  .v-card{background:#fff;border:1px solid #e0e0db;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+  .v-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+  .v-stat{background:#f8f8f6;border-radius:8px;padding:.75rem;text-align:center}
+  .v-stat .n{font-size:22px;font-weight:700}
+  .v-stat .l{font-size:11px;color:#888;margin-top:2px}
+  .loading{text-align:center;padding:3rem;color:#888;font-size:14px}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid #ccc;border-top-color:#555;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @media(max-width:600px){.grid2{grid-template-columns:1fr}.tbl-hdr,.tbl-row{grid-template-columns:75px 1fr 65px 55px}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="screen active" id="screen-login">
+  <div class="login-wrap">
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <div style="font-size:48px;margin-bottom:.75rem">🛡️</div>
+      <div style="font-size:20px;font-weight:700;margin-bottom:4px">Dashboard comercial</div>
+      <p style="font-size:13px;color:#666">Acceso de administrador</p>
+    </div>
+    <div class="card">
+      <div class="field"><label>Contraseña</label>
+        <input type="password" id="login-pass" placeholder="Contraseña..." onkeydown="if(event.key==='Enter')entrar()">
+      </div>
+      <button class="btn" onclick="entrar()">Entrar →</button>
+      <p class="err" id="login-err">Contraseña incorrecta.</p>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="screen" id="screen-dash">
+  <div class="dash">
+    <div class="dash-hdr">
+      <div>
+        <div class="dash-title">Dashboard comercial <span class="admin-badge">🛡 Admin</span></div>
+        <div class="dash-sub">Año <span id="current-year"></span> — todos los vendedores</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-sm" onclick="cargarTodo()">↻ Actualizar</button>
+        <button class="btn-sm" onclick="cerrarSesion()">Salir</button>
+      </div>
+    </div>
+
+    <div id="loading" class="loading"><span class="spinner"></span>Cargando datos...</div>
+    <div id="err-carga" style="display:none;padding:1rem;background:#FCEBEB;border-radius:8px;color:#A32D2D;font-size:13px;margin-bottom:1rem"></div>
+
+    <div id="main" style="display:none">
+      <div class="tabs">
+        <button class="tab active" onclick="showTab('resumen')">Resumen</button>
+        <button class="tab" onclick="showTab('vendedores')">Por vendedor</button>
+        <button class="tab" onclick="showTab('contactos')">Todos los contactos</button>
+      </div>
+
+      <!-- RESUMEN -->
+      <div class="section active" id="tab-resumen">
+        <div class="metric-grid">
+          <div class="metric"><div class="val" id="m-total">0</div><div class="lbl">Contactos</div></div>
+          <div class="metric"><div class="val" id="m-compraron">0</div><div class="lbl">Compraron</div></div>
+          <div class="metric"><div class="val" id="m-nocompraron">0</div><div class="lbl">No compraron</div></div>
+          <div class="metric"><div class="val" id="m-actuales">0</div><div class="lbl">Clientes actuales</div></div>
+          <div class="metric"><div class="val" id="m-nuevos">0</div><div class="lbl">Clientes nuevos</div></div>
+          <div class="metric"><div class="val" id="m-pedidos">0</div><div class="lbl">Pedidos enviados</div></div>
+        </div>
+        <div class="grid2">
+          <div class="card"><p class="section-title">Por vendedor</p><div id="r-vendedor"><div class="empty">Sin datos</div></div></div>
+          <div class="card"><p class="section-title">Por tipo de contacto</p><div id="r-tipo"><div class="empty">Sin datos</div></div></div>
+          <div class="card"><p class="section-title">Por motivo</p><div id="r-motivo"><div class="empty">Sin datos</div></div></div>
+          <div class="card"><p class="section-title">Próximos seguimientos</p><div id="r-proximos"><div class="empty">Sin seguimientos</div></div></div>
+        </div>
+      </div>
+
+      <!-- POR VENDEDOR -->
+      <div class="section" id="tab-vendedores">
+        <div id="cards-vendedores"><div class="empty">Sin datos</div></div>
+      </div>
+
+      <!-- TODOS LOS CONTACTOS -->
+      <div class="section" id="tab-contactos">
+        <div class="filter-bar">
+          Vendedor: <select id="fil-v" onchange="renderContactos()"><option value="">Todos</option></select>
+          Resultado: <select id="fil-r" onchange="renderContactos()"><option value="">Todos</option><option value="compro">Compró</option><option value="no_compro">No compró</option><option value="otra_empresa">Otra empresa</option></select>
+          Motivo: <select id="fil-m" onchange="renderContactos()"><option value="">Todos</option><option value="PROCER">PROCER</option><option value="WILSO">WILSO</option><option value="AMBOS">AMBOS</option></select>
+          Cliente: <select id="fil-ct" onchange="renderContactos()"><option value="">Todos</option><option value="actual">Actual</option><option value="nuevo">Nuevo</option></select>
+        </div>
+        <div class="card" style="overflow-x:auto">
+          <div class="tbl-hdr"><span>Fecha</span><span>Cliente / Vendedor</span><span>Tipo</span><span>Motivo</span><span>Resultado</span><span>Pedido</span><span>Seguimiento</span></div>
+          <div id="lista-contactos"><div class="empty">Sin contactos</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── CONFIGURACIÓN ───────────────────────────────────────────
+const ADMIN_PASS   = 'ADMIN2026';
+const SUPABASE_URL = 'https://jybpleomezzvvvzjscji.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5YnBsZW9tZXp6dnZ2empzY2ppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNjQwNDIsImV4cCI6MjA5Nzg0MDA0Mn0.KSCwUaDp6KQPo761mRmQi4VGR6xTEZZfPyuo2Z5XzU0';
+// ────────────────────────────────────────────────────────────
+
+let todos = [];
+document.getElementById('current-year').textContent = new Date().getFullYear();
+
+async function supabaseFetch() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/contactos?select=*&order=fecha.desc`, {
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function initials(n){ return n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
+function fmt(d){ if(!d)return'—'; const[y,m,dd]=d.split('-'); return`${dd}/${m}/${y}`; }
+
+function entrar(){
+  const pass=document.getElementById('login-pass').value;
+  if(pass===ADMIN_PASS){ document.getElementById('login-err').style.display='none'; show('screen-dash'); cargarTodo(); }
+  else{ document.getElementById('login-err').style.display='block'; document.getElementById('login-pass').value=''; }
+}
+function cerrarSesion(){ todos=[]; document.getElementById('login-pass').value=''; show('screen-login'); }
+
+async function cargarTodo(){
+  document.getElementById('loading').style.display='block';
+  document.getElementById('main').style.display='none';
+  document.getElementById('err-carga').style.display='none';
+  try {
+    // Normalizar nombres de columna de Supabase a camelCase para compatibilidad
+    const raw = await supabaseFetch();
+    todos = raw.map(r=>({
+      vendedor: r.vendedor, codigoVendedor: r.codigo_vendedor,
+      fecha: r.fecha, cliente: r.cliente, clienteTipo: r.cliente_tipo,
+      tipo: r.tipo, motivo: r.motivo, resultado: r.resultado,
+      envioMail: r.envio_mail, fechaMail: r.fecha_mail, pedidoTipo: r.pedido_tipo,
+      empresa: r.empresa, queCompra: r.que_compra, motivoOtra: r.motivo_otra,
+      otrosDetalle: r.otros_detalle, agenda: r.agenda, fechaAgenda: r.fecha_agenda,
+      obs: r.obs, id: r.id
+    }));
+    const vens=[...new Set(todos.map(c=>c.vendedor).filter(Boolean))].sort();
+    const sel=document.getElementById('fil-v');
+    sel.innerHTML='<option value="">Todos</option>'+vens.map(v=>`<option value="${v}">${v}</option>`).join('');
+    document.getElementById('main').style.display='block';
+    renderResumen(); renderVendedores(); renderContactos();
+  } catch(e) {
+    document.getElementById('err-carga').textContent='Error al cargar datos: '+e.message;
+    document.getElementById('err-carga').style.display='block';
+  } finally {
+    document.getElementById('loading').style.display='none';
+  }
+}
+
+function showTab(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['resumen','vendedores','contactos'][i]===name));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+function resBadge(r,empresa){
+  if(r==='compro') return '<span class="badge badge-green">Compró</span>';
+  if(r==='no_compro') return '<span class="badge badge-red">No compró</span>';
+  if(r==='otra_empresa') return `<span class="badge badge-amber">Otra${empresa?' — '+empresa:''}</span>`;
+  return '';
+}
+function tipoBadge(t){ const m={Teléfono:'badge-blue',WhatsApp:'badge-green',Presencial:'badge-gray'}; return `<span class="badge ${m[t]||'badge-gray'}">${t||'—'}</span>`; }
+function pedidoBadge(c){
+  if(c.resultado!=='compro'||c.envioMail!=='si') return '<span style="color:#ccc">—</span>';
+  const cols={PROCER:'badge-blue',WILSON:'badge-purple',AMBOS:'badge-amber'};
+  return `<span class="badge ${cols[c.pedidoTipo]||'badge-gray'}">${c.pedidoTipo||'—'}</span><div style="font-size:11px;color:#888;margin-top:2px">${fmt(c.fechaMail)}</div>`;
+}
+function clienteBadge(t){ if(t==='actual') return '<span class="badge badge-teal">Actual</span>'; if(t==='nuevo') return '<span class="badge badge-amber">Nuevo</span>'; return ''; }
+
+function renderResumen(){
+  const t=todos.length;
+  document.getElementById('m-total').textContent=t;
+  document.getElementById('m-compraron').textContent=todos.filter(c=>c.resultado==='compro').length;
+  document.getElementById('m-nocompraron').textContent=todos.filter(c=>c.resultado!=='compro').length;
+  document.getElementById('m-actuales').textContent=todos.filter(c=>c.clienteTipo==='actual').length;
+  document.getElementById('m-nuevos').textContent=todos.filter(c=>c.clienteTipo==='nuevo').length;
+  document.getElementById('m-pedidos').textContent=todos.filter(c=>c.resultado==='compro'&&c.envioMail==='si').length;
+
+  const byV={};todos.forEach(c=>{byV[c.vendedor]=(byV[c.vendedor]||0)+1});
+  document.getElementById('r-vendedor').innerHTML=Object.keys(byV).length?
+    Object.entries(byV).sort((a,b)=>b[1]-a[1]).map(([v,n])=>`
+      <div class="bar-row">
+        <div style="display:flex;align-items:center;gap:8px;min-width:140px"><div class="avatar">${initials(v)}</div><span style="font-size:13px">${v}</span></div>
+        <div class="bar-track"><div class="bar-fill" style="background:#185FA5;width:${t?Math.round((n/t)*100):0}%"></div></div>
+        <span style="font-size:13px;font-weight:700;min-width:24px;text-align:right">${n}</span>
+      </div>`).join(''):'<div class="empty">Sin datos</div>';
+
+  const byT={};todos.forEach(c=>{byT[c.tipo]=(byT[c.tipo]||0)+1});
+  const tColor={Teléfono:'#185FA5',WhatsApp:'#3B6D11',Presencial:'#5F5E5A'};
+  document.getElementById('r-tipo').innerHTML=Object.keys(byT).length?
+    Object.entries(byT).sort((a,b)=>b[1]-a[1]).map(([tp,n])=>`
+      <div class="bar-row">
+        <span style="font-size:13px;min-width:110px">${tp}</span>
+        <div class="bar-track"><div class="bar-fill" style="background:${tColor[tp]||'#888'};width:${t?Math.round((n/t)*100):0}%"></div></div>
+        <span style="font-size:13px;font-weight:700;min-width:24px;text-align:right">${n}</span>
+      </div>`).join(''):'<div class="empty">Sin datos</div>';
+
+  const byM={};todos.forEach(c=>{byM[c.motivo]=(byM[c.motivo]||0)+1});
+  const mColor={PROCER:'#185FA5',WILSO:'#3B6D11',AMBOS:'#854F0B'};
+  const mBadge={PROCER:'badge-blue',WILSO:'badge-green',AMBOS:'badge-amber'};
+  document.getElementById('r-motivo').innerHTML=Object.keys(byM).length?
+    Object.entries(byM).sort((a,b)=>b[1]-a[1]).map(([m,n])=>`
+      <div class="bar-row">
+        <span class="badge ${mBadge[m]||'badge-gray'}" style="min-width:55px;text-align:center">${m}</span>
+        <div class="bar-track"><div class="bar-fill" style="background:${mColor[m]||'#888'};width:${t?Math.round((n/t)*100):0}%"></div></div>
+        <span style="font-size:13px;font-weight:700;min-width:24px;text-align:right">${n}</span>
+      </div>`).join(''):'<div class="empty">Sin datos</div>';
+
+  const hoy=new Date().toISOString().split('T')[0];
+  const prox=todos.filter(c=>c.agenda==='si'&&c.fechaAgenda>=hoy).sort((a,b)=>a.fechaAgenda.localeCompare(b.fechaAgenda)).slice(0,6);
+  document.getElementById('r-proximos').innerHTML=prox.length?prox.map(c=>`
+    <div class="bar-row">
+      <div style="flex:1"><div style="font-size:13px;font-weight:600">${c.cliente}</div><div style="font-size:11px;color:#888">${c.vendedor}</div></div>
+      <span style="font-size:12px;color:#888;white-space:nowrap">${fmt(c.fechaAgenda)}</span>
+    </div>`).join(''):'<div class="empty">Sin seguimientos agendados</div>';
+}
+
+function renderVendedores(){
+  const byV={};
+  todos.forEach(c=>{if(!byV[c.vendedor])byV[c.vendedor]=[];byV[c.vendedor].push(c);});
+  const hoy=new Date().toISOString().split('T')[0];
+  const el=document.getElementById('cards-vendedores');
+  if(!Object.keys(byV).length){el.innerHTML='<div class="empty">Sin datos</div>';return;}
+  el.innerHTML=Object.entries(byV).sort((a,b)=>b[1].length-a[1].length).map(([nombre,lista])=>{
+    const compraron=lista.filter(c=>c.resultado==='compro').length;
+    const pedidos=lista.filter(c=>c.resultado==='compro'&&c.envioMail==='si').length;
+    const proxSeg=lista.filter(c=>c.agenda==='si'&&c.fechaAgenda>=hoy).length;
+    const actuales=lista.filter(c=>c.clienteTipo==='actual').length;
+    const nuevos=lista.filter(c=>c.clienteTipo==='nuevo').length;
+    const noCompra=lista.filter(c=>c.resultado!=='compro').length;
+    const pct=lista.length?Math.round((compraron/lista.length)*100):0;
+    return`<div class="v-card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        <div class="avatar" style="width:40px;height:40px;font-size:14px">${initials(nombre)}</div>
+        <div><div style="font-size:15px;font-weight:700">${nombre}</div><div style="font-size:12px;color:#888">${lista.length} contacto${lista.length!==1?'s':''} · ${pct}% conversión</div></div>
+      </div>
+      <div class="v-stats">
+        <div class="v-stat"><div class="n">${compraron}</div><div class="l">Compraron</div></div>
+        <div class="v-stat"><div class="n">${pedidos}</div><div class="l">Pedidos</div></div>
+        <div class="v-stat"><div class="n">${proxSeg}</div><div class="l">Seguimientos</div></div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <span class="badge badge-teal">${actuales} actuales</span>
+        <span class="badge badge-amber">${nuevos} nuevos</span>
+        <span class="badge badge-red">${noCompra} no compraron</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderContactos(){
+  const fv=document.getElementById('fil-v').value;
+  const fr=document.getElementById('fil-r').value;
+  const fm=document.getElementById('fil-m').value;
+  const fct=document.getElementById('fil-ct').value;
+  const lista=todos.filter(c=>(!fv||c.vendedor===fv)&&(!fr||c.resultado===fr)&&(!fm||c.motivo===fm)&&(!fct||c.clienteTipo===fct));
+  const el=document.getElementById('lista-contactos');
+  if(!lista.length){el.innerHTML='<div class="empty">No hay contactos que coincidan</div>';return;}
+  el.innerHTML=lista.map(c=>`
+    <div class="tbl-row">
+      <span style="color:#888;font-size:12px">${fmt(c.fecha)}</span>
+      <span><div style="font-weight:600">${c.cliente}</div><div style="font-size:11px;color:#888">${c.vendedor}</div>${c.clienteTipo?`<div style="margin-top:2px">${clienteBadge(c.clienteTipo)}</div>`:''}</span>
+      <span>${tipoBadge(c.tipo)}</span>
+      <span><span class="badge badge-blue">${c.motivo||'—'}</span></span>
+      <span>${resBadge(c.resultado,c.empresa)}${c.resultado==='otra_empresa'&&c.queCompra?`<div style="font-size:11px;color:#888;margin-top:2px">${c.queCompra}${c.motivoOtra?' · '+c.motivoOtra:''}</div>`:''}</span>
+      <span>${pedidoBadge(c)}</span>
+      <span style="font-size:12px;color:#888">${c.agenda==='si'?fmt(c.fechaAgenda):'—'}</span>
+    </div>`).join('');
+}
+</script>
+</body>
+</html>

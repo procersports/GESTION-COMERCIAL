@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro de Contacto</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#f4f3ef;min-height:100vh;padding:1.5rem 1rem;color:#1a1a1a}
+  .wrap{max-width:560px;margin:0 auto}
+  .logo{font-size:18px;font-weight:700;color:#1a1a1a;margin-bottom:4px}
+  .sub{font-size:13px;color:#666;margin-bottom:1.5rem}
+  .card{background:#fff;border:1px solid #e0e0db;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+  .section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#888;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #eee}
+  .field{margin-bottom:12px}
+  label{font-size:13px;color:#555;display:block;margin-bottom:4px}
+  input,select,textarea{width:100%;font-size:14px;padding:9px 12px;border:1px solid #d0d0ca;border-radius:8px;background:#fff;color:#1a1a1a;font-family:inherit;outline:none;transition:border-color .15s}
+  input:focus,select:focus,textarea:focus{border-color:#185FA5}
+  textarea{resize:vertical;min-height:60px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  .conditional{display:none}.conditional.show{display:block}
+  .btn{background:#1a1a1a;color:#fff;border:none;padding:13px 24px;border-radius:8px;font-size:14px;cursor:pointer;font-weight:700;width:100%;font-family:inherit;transition:opacity .15s}
+  .btn:hover{opacity:.85}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .tipos-row,.motivo-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+  .tipo-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:8px;border:1px solid #d0d0ca;font-size:13px;cursor:pointer;color:#555;background:#fff;font-family:inherit;transition:all .15s}
+  .tipo-btn.sel{border-color:#185FA5;color:#185FA5;background:#E6F1FB;font-weight:700}
+  .motivo-btn{padding:9px 18px;border-radius:8px;border:1px solid #d0d0ca;font-size:13px;cursor:pointer;color:#555;background:#fff;font-family:inherit;transition:all .15s}
+  .motivo-btn.sel{border-color:#185FA5;color:#185FA5;background:#E6F1FB;font-weight:700}
+  .cliente-row{display:flex;gap:8px;margin-top:4px}
+  .cliente-btn{flex:1;padding:10px;border-radius:8px;border:1px solid #d0d0ca;font-size:13px;cursor:pointer;text-align:center;color:#555;background:#fff;font-family:inherit;transition:all .15s}
+  .cliente-btn.sel-actual{border-color:#3B6D11;color:#3B6D11;background:#EAF3DE;font-weight:700}
+  .cliente-btn.sel-nuevo{border-color:#854F0B;color:#854F0B;background:#FAEEDA;font-weight:700}
+  .sub-block{background:#f8f8f6;border-radius:8px;padding:1rem;margin-top:8px}
+  .sub-title{font-size:12px;font-weight:700;color:#555;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em}
+  .err{color:#A32D2D;font-size:12px;margin-top:8px;padding:8px 12px;background:#FCEBEB;border-radius:6px;display:none}
+  .screen{display:none}.screen.active{display:block}
+  .login-wrap{max-width:360px;margin:4rem auto}
+  .hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
+  .avatar{width:36px;height:36px;border-radius:50%;background:#E6F1FB;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#185FA5}
+  .salir-btn{background:none;border:1px solid #d0d0ca;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;color:#555;font-family:inherit}
+  .success-wrap{text-align:center;padding:3rem 1rem}
+  .otro-btn{background:none;border:1px solid #d0d0ca;padding:10px 20px;border-radius:8px;font-size:13px;cursor:pointer;color:#1a1a1a;font-family:inherit;margin-top:12px}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="screen active" id="screen-login">
+  <div class="login-wrap">
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <div style="font-size:48px;margin-bottom:.75rem">🔒</div>
+      <div class="logo" style="text-align:center">Registro de contacto</div>
+      <p class="sub" style="text-align:center;margin:4px 0 0">Ingresá tu código para continuar</p>
+    </div>
+    <div class="card">
+      <div class="field">
+        <label>Tu código de acceso</label>
+        <input type="password" id="login-codigo" placeholder="Tu código..." onkeydown="if(event.key==='Enter')entrar()">
+      </div>
+      <button class="btn" onclick="entrar()">Entrar →</button>
+      <p class="err" id="login-err">Código incorrecto. Verificá mayúsculas y sin espacios.</p>
+    </div>
+  </div>
+</div>
+
+<!-- FORMULARIO -->
+<div class="screen" id="screen-form">
+  <div class="wrap">
+    <div class="hdr">
+      <div>
+        <div class="logo">Registro de contacto</div>
+        <p class="sub" style="margin:2px 0 0">Completá los datos del contacto</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="avatar" id="hdr-avatar"></div>
+        <div>
+          <div style="font-size:13px;font-weight:700" id="hdr-nombre"></div>
+          <button class="salir-btn" onclick="cerrarSesion()">Salir</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Fecha</div>
+      <div class="field"><label>Fecha del contacto *</label><input type="date" id="f-fecha"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Cliente</div>
+      <div class="field"><label>Nombre del cliente *</label><input type="text" id="f-cliente" placeholder="Ej: Deportes San Martín"></div>
+      <div class="field">
+        <label>¿Es cliente actual o nuevo? *</label>
+        <div class="cliente-row">
+          <button type="button" class="cliente-btn" id="btn-actual" onclick="setClienteTipo('actual')">✓ Cliente actual</button>
+          <button type="button" class="cliente-btn" id="btn-nuevo" onclick="setClienteTipo('nuevo')">+ Cliente nuevo</button>
+        </div>
+        <input type="hidden" id="f-cliente-tipo">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Tipo y motivo</div>
+      <div class="field">
+        <label>Tipo de contacto *</label>
+        <div class="tipos-row">
+          <button type="button" class="tipo-btn" onclick="setTipo(this,'Teléfono')">📞 Teléfono</button>
+          <button type="button" class="tipo-btn" onclick="setTipo(this,'WhatsApp')">💬 WhatsApp</button>
+          <button type="button" class="tipo-btn" onclick="setTipo(this,'Presencial')">🤝 Presencial</button>
+        </div>
+        <input type="hidden" id="f-tipo">
+      </div>
+      <div class="field">
+        <label>Motivo del contacto *</label>
+        <div class="motivo-row">
+          <button type="button" class="motivo-btn" onclick="setMotivo(this,'PROCER')">PROCER</button>
+          <button type="button" class="motivo-btn" onclick="setMotivo(this,'WILSO')">WILSO</button>
+          <button type="button" class="motivo-btn" onclick="setMotivo(this,'AMBOS')">AMBOS</button>
+        </div>
+        <input type="hidden" id="f-motivo">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Resultado</div>
+      <div class="field">
+        <label>Resultado del contacto *</label>
+        <select id="f-resultado" onchange="toggleResultado()">
+          <option value="">Seleccionar...</option>
+          <option value="compro">Compró</option>
+          <option value="no_compro">No compró</option>
+          <option value="otra_empresa">Compra a otra empresa</option>
+        </select>
+      </div>
+      <div class="conditional" id="bloque-compro">
+        <div class="sub-block">
+          <div class="sub-title">Detalles del pedido</div>
+          <div class="field"><label>¿Se envió el pedido por mail?</label>
+            <select id="f-envio-mail" onchange="toggleMail()"><option value="">No</option><option value="si">Sí</option></select>
+          </div>
+          <div class="conditional row2" id="bloque-mail">
+            <div class="field"><label>Fecha de envío del mail</label><input type="date" id="f-fecha-mail"></div>
+            <div class="field"><label>Pedido de</label>
+              <select id="f-pedido-tipo"><option value="">Seleccionar...</option><option value="PROCER">PROCER</option><option value="WILSON">WILSON</option><option value="AMBOS">AMBOS</option></select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="conditional" id="bloque-otra">
+        <div class="sub-block">
+          <div class="sub-title">Detalles — otra empresa</div>
+          <div class="row3">
+            <div class="field"><label>¿A quién le compra?</label><input type="text" id="f-empresa" placeholder="Empresa"></div>
+            <div class="field"><label>¿Qué le compra?</label><input type="text" id="f-que-compra" placeholder="Producto"></div>
+            <div class="field"><label>Motivo principal</label>
+              <select id="f-motivo-otra" onchange="toggleOtros()">
+                <option value="">Seleccionar...</option>
+                <option value="Mejores condiciones">Mejores condiciones</option>
+                <option value="Mejor tiempo de entrega">Mejor tiempo de entrega</option>
+                <option value="Mejor servicio">Mejor servicio</option>
+                <option value="Otros">Otros</option>
+              </select>
+            </div>
+          </div>
+          <div class="conditional field" id="bloque-otros"><label>Especificar motivo</label><input type="text" id="f-otros-detalle" placeholder="Describir..."></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Seguimiento</div>
+      <div class="row2">
+        <div class="field"><label>¿Se agendó otro contacto?</label>
+          <select id="f-agenda" onchange="toggleAgenda()"><option value="">No</option><option value="si">Sí</option></select>
+        </div>
+        <div class="conditional field" id="bloque-agenda"><label>Fecha del próximo contacto</label><input type="date" id="f-fecha-agenda"></div>
+      </div>
+      <div class="field"><label>Observaciones (opcional)</label><textarea id="f-obs" placeholder="Notas adicionales..."></textarea></div>
+    </div>
+
+    <p class="err" id="form-error"></p>
+    <button class="btn" id="btn-guardar" onclick="guardar()">Guardar contacto</button>
+    <br><br>
+  </div>
+</div>
+
+<!-- ÉXITO -->
+<div class="screen" id="screen-ok">
+  <div class="success-wrap">
+    <div style="font-size:56px;margin-bottom:.75rem">✅</div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:8px">¡Contacto guardado!</div>
+    <p style="font-size:14px;color:#666" id="ok-detalle"></p>
+    <br>
+    <button class="btn" style="max-width:240px;margin:0 auto" onclick="nuevoContacto()">+ Cargar otro contacto</button>
+    <br>
+    <button class="otro-btn" onclick="cerrarSesion()">Salir</button>
+  </div>
+</div>
+
+<script>
+// ─── CONFIGURACIÓN SUPABASE ──────────────────────────────────
+const SUPABASE_URL = 'https://jybpleomezzvvvzjscji.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5YnBsZW9tZXp6dnZ2empzY2ppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNjQwNDIsImV4cCI6MjA5Nzg0MDA0Mn0.KSCwUaDp6KQPo761mRmQi4VGR6xTEZZfPyuo2Z5XzU0';
+// ─── VENDEDORES: CÓDIGO → NOMBRE ────────────────────────────
+const VENDEDORES = {
+  'GARCIA':    'Juan García',
+  'LOPEZ':     'María López',
+  'MARTINEZ':  'Carlos Martínez',
+  'FERNANDEZ': 'Laura Fernández',
+  'RODRIGUEZ': 'Diego Rodríguez',
+  'PEREZ':     'Ana Pérez',
+  'GOMEZ':     'Pablo Gómez',
+  'SANCHEZ':   'Sofía Sánchez',
+  'TORRES':    'Martín Torres',
+  'RUIZ':      'Valeria Ruiz',
+  'DEMO':      'Vendedor Demo'
+};
+// ────────────────────────────────────────────────────────────
+
+let vendedorActual = null;
+
+async function supabaseInsert(data) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/contactos`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) { const e = await res.text(); throw new Error(e); }
+}
+
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function initials(n){ return n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
+
+function entrar(){
+  const codigo = document.getElementById('login-codigo').value.trim().toUpperCase();
+  const err = document.getElementById('login-err');
+  if(VENDEDORES[codigo]){
+    vendedorActual = { codigo, nombre: VENDEDORES[codigo] };
+    document.getElementById('hdr-nombre').textContent = vendedorActual.nombre;
+    document.getElementById('hdr-avatar').textContent = initials(vendedorActual.nombre);
+    err.style.display='none';
+    document.getElementById('f-fecha').valueAsDate = new Date();
+    show('screen-form');
+  } else {
+    err.style.display='block';
+    document.getElementById('login-codigo').value='';
+  }
+}
+
+function cerrarSesion(){ vendedorActual=null; document.getElementById('login-codigo').value=''; limpiarForm(); show('screen-login'); }
+function setTipo(el,v){ document.querySelectorAll('.tipo-btn').forEach(b=>b.classList.remove('sel')); el.classList.add('sel'); document.getElementById('f-tipo').value=v; }
+function setMotivo(el,v){ document.querySelectorAll('.motivo-btn').forEach(b=>b.classList.remove('sel')); el.classList.add('sel'); document.getElementById('f-motivo').value=v; }
+function setClienteTipo(v){
+  document.getElementById('btn-actual').className='cliente-btn'+(v==='actual'?' sel-actual':'');
+  document.getElementById('btn-nuevo').className='cliente-btn'+(v==='nuevo'?' sel-nuevo':'');
+  document.getElementById('f-cliente-tipo').value=v;
+}
+function toggleResultado(){
+  const v=document.getElementById('f-resultado').value;
+  document.getElementById('bloque-compro').classList.toggle('show',v==='compro');
+  document.getElementById('bloque-otra').classList.toggle('show',v==='otra_empresa');
+  if(v!=='compro'){ document.getElementById('f-envio-mail').value=''; document.getElementById('bloque-mail').classList.remove('show'); }
+}
+function toggleMail(){ document.getElementById('bloque-mail').classList.toggle('show',document.getElementById('f-envio-mail').value==='si'); }
+function toggleOtros(){ document.getElementById('bloque-otros').classList.toggle('show',document.getElementById('f-motivo-otra').value==='Otros'); }
+function toggleAgenda(){ document.getElementById('bloque-agenda').classList.toggle('show',document.getElementById('f-agenda').value==='si'); }
+
+async function guardar(){
+  const err=document.getElementById('form-error');
+  err.style.display='none';
+  const resultado=document.getElementById('f-resultado').value;
+  const envioMail=document.getElementById('f-envio-mail').value;
+  const v={
+    vendedor: vendedorActual.nombre,
+    codigo_vendedor: vendedorActual.codigo,
+    fecha: document.getElementById('f-fecha').value,
+    cliente: document.getElementById('f-cliente').value.trim(),
+    cliente_tipo: document.getElementById('f-cliente-tipo').value,
+    tipo: document.getElementById('f-tipo').value,
+    motivo: document.getElementById('f-motivo').value,
+    resultado,
+    envio_mail: envioMail,
+    fecha_mail: document.getElementById('f-fecha-mail').value || null,
+    pedido_tipo: document.getElementById('f-pedido-tipo').value || null,
+    empresa: document.getElementById('f-empresa').value.trim() || null,
+    que_compra: document.getElementById('f-que-compra').value.trim() || null,
+    motivo_otra: document.getElementById('f-motivo-otra').value || null,
+    otros_detalle: document.getElementById('f-otros-detalle').value.trim() || null,
+    agenda: document.getElementById('f-agenda').value,
+    fecha_agenda: document.getElementById('f-fecha-agenda').value || null,
+    obs: document.getElementById('f-obs').value.trim() || null,
+    id: Date.now()
+  };
+  if(!v.fecha||!v.cliente||!v.cliente_tipo||!v.tipo||!v.motivo||!v.resultado){
+    err.textContent='Completá todos los campos obligatorios (*)'; err.style.display='block'; return;
+  }
+  if(resultado==='compro'&&envioMail==='si'&&(!v.fecha_mail||!v.pedido_tipo)){
+    err.textContent='Indicá la fecha del mail y el tipo de pedido'; err.style.display='block'; return;
+  }
+  const btn=document.getElementById('btn-guardar');
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span>Guardando...';
+  try {
+    await supabaseInsert(v);
+    document.getElementById('ok-detalle').textContent=v.cliente+' · '+v.tipo+' · '+v.motivo;
+    limpiarForm();
+    show('screen-ok');
+  } catch(e) {
+    err.textContent='Error al guardar. Verificá tu conexión e intentá de nuevo.';
+    err.style.display='block';
+  } finally {
+    btn.disabled=false;
+    btn.innerHTML='Guardar contacto';
+  }
+}
+
+function nuevoContacto(){ document.getElementById('f-fecha').valueAsDate=new Date(); show('screen-form'); }
+
+function limpiarForm(){
+  ['f-cliente','f-empresa','f-que-compra','f-otros-detalle','f-obs','f-fecha-agenda','f-fecha-mail'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['f-tipo','f-motivo','f-resultado','f-agenda','f-motivo-otra','f-envio-mail','f-pedido-tipo','f-cliente-tipo'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.querySelectorAll('.tipo-btn,.motivo-btn').forEach(b=>b.classList.remove('sel'));
+  document.getElementById('btn-actual').className='cliente-btn';
+  document.getElementById('btn-nuevo').className='cliente-btn';
+  ['bloque-compro','bloque-otra','bloque-mail','bloque-agenda','bloque-otros'].forEach(id=>document.getElementById(id).classList.remove('show'));
+  document.getElementById('form-error').style.display='none';
+}
+</script>
+</body>
+</html>
