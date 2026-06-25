@@ -50,7 +50,7 @@
   .bar-fill{height:4px;border-radius:2px}
   .filter-bar{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;font-size:13px;color:#666}
   .filter-bar select{width:auto;padding:6px 10px}
-  .tbl-hdr,.tbl-row{display:grid;gap:8px;grid-template-columns:90px 1fr 80px 65px 110px 100px 80px}
+  .tbl-hdr,.tbl-row{display:grid;gap:8px;grid-template-columns:90px 1fr 80px 65px 110px 100px 80px 50px}
   .tbl-hdr{padding:8px 0;border-bottom:1px solid #d0d0ca;font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em}
   .tbl-row{padding:10px 0;border-bottom:1px solid #f0f0ee;font-size:13px;align-items:start}
   .tbl-row:last-child{border-bottom:none}
@@ -317,15 +317,29 @@ function renderContactos(){
   const el=document.getElementById('lista-contactos');
   if(!lista.length){el.innerHTML='<div class="empty">No hay contactos que coincidan</div>';return;}
   el.innerHTML=lista.map(c=>`
-    <div class="tbl-row">
-      <span style="color:#888;font-size:12px">${fmt(c.fecha)}</span>
-      <span><div style="font-weight:600">${c.cliente}</div><div style="font-size:11px;color:#888">${c.vendedor}</div>${c.clienteTipo?`<div style="margin-top:2px">${clienteBadge(c.clienteTipo)}</div>`:''}</span>
-      <span>${tipoBadge(c.tipo)}</span>
-      <span><span class="badge badge-blue">${c.motivo||'—'}</span></span>
-      <span>${resBadge(c.resultado,c.empresa)}${c.resultado==='otra_empresa'&&c.queCompra?`<div style="font-size:11px;color:#888;margin-top:2px">${c.queCompra}${c.motivoOtra?' · '+c.motivoOtra:''}</div>`:''}</span>
-      <span>${pedidoBadge(c)}</span>
-      <span style="font-size:12px;color:#888">${c.agenda==='si'?fmt(c.fechaAgenda):'—'}</span>
-    </div>`).join('');
+<div class="tbl-row">
+<span style="color:#888;font-size:12px">${fmt(c.fecha)}</span>
+<span><div style="font-weight:600">${c.cliente}</div><div style="font-size:11px;color:#888">${c.vendedor}</div>${c.clienteTipo?`<div style="margin-top:2px">${clienteBadge(c.clienteTipo)}</div>`:''}</span>
+<span>${tipoBadge(c.tipo)}</span>
+<span><span class="badge badge-blue">${c.motivo||'—'}</span></span>
+<span>${resBadge(c.resultado,c.empresa)}${c.resultado==='otra_empresa'&&c.queCompra?`<div style="font-size:11px;color:#888;margin-top:2px">${c.queCompra}${c.motivoOtra?' · '+c.motivoOtra:''}</div>`:''}</span>
+<span>${pedidoBadge(c)}</span>
+<span style="font-size:12px;color:#888">${c.agenda==='si'?fmt(c.fechaAgenda):'—'}</span>
+<span><button onclick="borrarContacto(${c.id})" style="background:none;border:none;cursor:pointer;font-size:16px;color:#ccc" title="Eliminar">🗑</button></span>
+</div>`).join('');
+}
+async function borrarContacto(id){
+  if(!confirm('¿Seguro que querés eliminar este contacto? Esta acción no se puede deshacer.')) return;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/contactos?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if(!res.ok) throw new Error(await res.text());
+    await cargarTodo();
+  } catch(e) {
+    alert('Error al eliminar: ' + e.message);
+  }
 }
 </script>
 </body>
