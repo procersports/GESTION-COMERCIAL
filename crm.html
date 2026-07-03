@@ -368,6 +368,7 @@ textarea{resize:vertical;min-height:70px}
             </div>
             <div class="field"><label>Resultado *</label>
               <div class="toggle-row">
+                <button type="button" class="toggle-btn" onclick="setResultado(this,'compro')">🛒 Compró</button>
                 <button type="button" class="toggle-btn" onclick="setResultado(this,'va_a_comprar')">✅ Va a comprar</button>
                 <button type="button" class="toggle-btn" onclick="setResultado(this,'lo_analiza')">🤔 Lo va a analizar</button>
                 <button type="button" class="toggle-btn" onclick="setResultado(this,'no_compra')">❌ No va a comprar</button>
@@ -375,11 +376,11 @@ textarea{resize:vertical;min-height:70px}
               <input type="hidden" id="g-resultado">
             </div>
 
-            <!-- Si va a comprar -->
-            <div class="cond" id="bloque-compra">
+            <!-- Si compro -->
+            <div class="cond" id="bloque-compro">
               <div class="form-block" style="background:#fff;border:1px solid var(--border)">
-                <div class="form-block-title">Detalles del pedido</div>
-                <div class="field"><label>Fecha último pedido</label><input type="date" id="g-fecha-pedido"></div>
+                <div class="form-block-title">Detalles de la compra</div>
+                <div class="field"><label>Fecha de compra</label><input type="date" id="g-fecha-compra"></div>
                 <div class="field"><label>Rubro</label>
                   <div class="toggle-row">
                     <button type="button" class="toggle-btn" onclick="setRubro(this,'Accesorios')">Accesorios</button>
@@ -388,6 +389,14 @@ textarea{resize:vertical;min-height:70px}
                   </div>
                   <input type="hidden" id="g-rubro">
                 </div>
+              </div>
+            </div>
+
+            <!-- Si va a comprar o analiza -->
+            <div class="cond" id="bloque-seguimiento">
+              <div class="form-block" style="background:#fff;border:1px solid var(--border)">
+                <div class="form-block-title">Seguimiento</div>
+                <div class="field"><label>Fecha de seguimiento</label><input type="date" id="g-fecha-seguimiento"></div>
               </div>
             </div>
 
@@ -834,8 +843,8 @@ async function cargarGestiones(clienteId){
     const data = await sb(`gestiones?cliente_id=eq.${clienteId}&order=fecha_contacto.desc`);
     if(!data||!data.length){ el.innerHTML='<div class="empty-state">Sin gestiones registradas</div>'; return; }
     el.innerHTML = data.map(g=>{
-      const res = g.resultado==='va_a_comprar'?'Va a comprar':g.resultado==='lo_analiza'?'Lo va a analizar':'No va a comprar';
-      const badge = g.resultado==='va_a_comprar'?'badge-green':g.resultado==='lo_analiza'?'badge-amber':'badge-red';
+      const res = g.resultado==='compro'?'Compro':g.resultado==='va_a_comprar'?'Va a comprar':g.resultado==='lo_analiza'?'Lo va a analizar':'No va a comprar';
+      const badge = g.resultado==='compro'||g.resultado==='va_a_comprar'?'badge-green':g.resultado==='lo_analiza'?'badge-amber':'badge-red';
       return `<div class="gestion-item">
         <div class="gestion-hdr">
           <div>
@@ -849,7 +858,8 @@ async function cargarGestiones(clienteId){
         </div>
         <div class="gestion-body">
           ${g.rubro?`<span class="badge badge-blue" style="margin-right:4px">${g.rubro}</span>`:''}
-          ${g.fecha_ultimo_pedido?`📦 Último pedido: ${fmt(g.fecha_ultimo_pedido)}<br>`:''}
+          ${g.fecha_compra?`🛒 Fecha compra: ${fmt(g.fecha_compra)}<br>`:''}
+          ${g.fecha_seguimiento?`📅 Seguimiento: ${fmt(g.fecha_seguimiento)}<br>`:''}
           ${g.motivo_no_compra?`Motivo: ${g.motivo_no_compra}${g.motivo_competencia?' · '+g.motivo_competencia:''}<br>`:''}
           ${g.comentarios?`💬 ${g.comentarios}`:''}
         </div>
@@ -868,9 +878,10 @@ function toggleFormGestion(){
 
 function setResultado(el, val){
   document.querySelectorAll('#form-gestion .toggle-btn[onclick*="setResultado"]').forEach(b=>b.classList.remove('sel','sel-green','sel-red'));
-  el.classList.add(val==='va_a_comprar'?'sel-green':val==='no_compra'?'sel-red':'sel');
+  el.classList.add(val==='compro'||val==='va_a_comprar'?'sel-green':val==='no_compra'?'sel-red':'sel');
   document.getElementById('g-resultado').value = val;
-  document.getElementById('bloque-compra').classList.toggle('show', val==='va_a_comprar');
+  document.getElementById('bloque-compro').classList.toggle('show', val==='compro');
+  document.getElementById('bloque-seguimiento').classList.toggle('show', val==='va_a_comprar'||val==='lo_analiza');
   document.getElementById('bloque-no-compra').classList.toggle('show', val==='no_compra');
 }
 
@@ -910,7 +921,8 @@ async function guardarGestion(){
     motivo_no_compra: document.getElementById('g-motivo').value||null,
     motivo_competencia: document.getElementById('g-competencia').value||null,
     rubro: document.getElementById('g-rubro').value||null,
-    fecha_ultimo_pedido: document.getElementById('g-fecha-pedido').value||null,
+    fecha_compra: document.getElementById('g-fecha-compra').value||null,
+    fecha_seguimiento: document.getElementById('g-fecha-seguimiento').value||null,
     comentarios: document.getElementById('g-comentarios').value.trim()||null
   };
   try {
@@ -921,10 +933,11 @@ async function guardarGestion(){
     document.getElementById('g-rubro').value='';
     document.getElementById('g-motivo').value='';
     document.getElementById('g-competencia').value='';
-    document.getElementById('g-fecha-pedido').value='';
+    document.getElementById('g-fecha-compra').value='';
+    document.getElementById('g-fecha-seguimiento').value='';
     document.getElementById('g-comentarios').value='';
     document.querySelectorAll('#form-gestion .toggle-btn').forEach(b=>b.classList.remove('sel','sel-green','sel-red'));
-    ['bloque-compra','bloque-no-compra','bloque-competencia'].forEach(id=>document.getElementById(id).classList.remove('show'));
+    ['bloque-compro','bloque-seguimiento','bloque-no-compra','bloque-competencia'].forEach(id=>document.getElementById(id).classList.remove('show'));
     toggleFormGestion();
     // Recargar gestiones y actualizar semáforo
     const gest = await sb(`gestiones?codigo_vendedor=eq.${usuario.codigo}&order=fecha_contacto.desc`);

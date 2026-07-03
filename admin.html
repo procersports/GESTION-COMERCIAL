@@ -413,8 +413,8 @@ function renderUltimasGestiones(){
   el.innerHTML = ultimas.map(g=>{
     const cli = clientes.find(c=>c.id===g.cliente_id);
     const vend = vendedores.find(v=>v.codigo===g.codigo_vendedor);
-    const res = g.resultado==='va_a_comprar'?'Va a comprar':g.resultado==='lo_analiza'?'Lo analiza':'No compra';
-    const badge = g.resultado==='va_a_comprar'?'badge-green':g.resultado==='lo_analiza'?'badge-amber':'badge-red';
+    const res = g.resultado==='compro'?'Compró':g.resultado==='va_a_comprar'?'Va a comprar':g.resultado==='lo_analiza'?'Lo analiza':'No compra';
+    const badge = g.resultado==='compro'||g.resultado==='va_a_comprar'?'badge-green':g.resultado==='lo_analiza'?'badge-amber':'badge-red';
     return `<div class="gestion-item">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
@@ -512,8 +512,8 @@ async function abrirFichaCliente(id){
     const gest = await sb('gestiones?cliente_id=eq.'+c.id+'&order=fecha_contacto.desc');
     if(!gest||!gest.length){ el.innerHTML='<div class="empty-state">Sin gestiones registradas</div>'; return; }
     el.innerHTML = gest.map(function(g){
-      const res = g.resultado==='va_a_comprar'?'Va a comprar':g.resultado==='lo_analiza'?'Lo va a analizar':'No va a comprar';
-      const badge = g.resultado==='va_a_comprar'?'badge-green':g.resultado==='lo_analiza'?'badge-amber':'badge-red';
+      const res = g.resultado==='compro'?'Compró':g.resultado==='va_a_comprar'?'Va a comprar':g.resultado==='lo_analiza'?'Lo va a analizar':'No va a comprar';
+      const badge = g.resultado==='compro'||g.resultado==='va_a_comprar'?'badge-green':g.resultado==='lo_analiza'?'badge-amber':'badge-red';
       return '<div class="gestion-item">'+
         '<div style="display:flex;justify-content:space-between;align-items:flex-start">'+
           '<div>'+
@@ -524,9 +524,10 @@ async function abrirFichaCliente(id){
         '</div>'+
         '<div style="font-size:12px;color:var(--muted);margin-top:4px">'+
           (g.rubro?'<span class="badge badge-blue" style="margin-right:4px">'+g.rubro+'</span>':'')+
-          (g.fecha_ultimo_pedido?'\ud83d\udce6 \u00daltimo pedido: '+fmt(g.fecha_ultimo_pedido)+'<br>':'')+
-          (g.motivo_no_compra?'Motivo: '+g.motivo_no_compra+(g.motivo_competencia?' \u00b7 '+g.motivo_competencia:'')+'<br>':'')+
-          (g.comentarios?'\ud83d\udcac '+g.comentarios:'')+
+          (g.fecha_compra?'🛒 Fecha compra: '+fmt(g.fecha_compra)+'<br>':'')+
+          (g.fecha_seguimiento?'📅 Seguimiento: '+fmt(g.fecha_seguimiento)+'<br>':'')+
+          (g.motivo_no_compra?'Motivo: '+g.motivo_no_compra+(g.motivo_competencia?' · '+g.motivo_competencia:'')+'<br>':'')+
+          (g.comentarios?'💬 '+g.comentarios:'')+
         '</div>'+
       '</div>';
     }).join('');
