@@ -218,9 +218,11 @@ textarea{resize:vertical;min-height:70px}
           </div>
           <div id="lista-clientes"><div class="loading">Cargando...</div></div>
         </div>
+        <button class="btn btn-outline" style="width:100%;margin-top:.5rem" onclick="mostrarNuevoCliente()">+ Agregar cliente nuevo</button>
       </div>
 
       <!-- TAB NOVEDADES -->
+
       <div id="tab-novedades" style="display:none">
         <div class="card">
           <div id="lista-novedades"><div class="loading">Cargando...</div></div>
@@ -402,6 +404,38 @@ textarea{resize:vertical;min-height:70px}
   </div>
 </div>
 
+<!-- NUEVO CLIENTE -->
+<div class="screen" id="screen-nuevo-cliente">
+  <div class="app">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="btn-ghost" onclick="volverAClientes()">← Volver</button>
+      </div>
+      <div class="topbar-right">
+        <button class="btn-ghost" onclick="doLogout()">Salir</button>
+      </div>
+    </div>
+    <div class="main-content">
+      <div class="card">
+        <div class="card-title">Nuevo cliente</div>
+        <div class="field"><label>Nombre / Razón social *</label><input type="text" id="nc-nombre" placeholder="Ej: Deportes San Martín"></div>
+        <div class="row2">
+          <div class="field"><label>CUIT</label><input type="text" id="nc-cuit" placeholder="30-00000000-0"></div>
+          <div class="field"><label>Teléfono</label><input type="text" id="nc-tel" placeholder="Teléfono"></div>
+        </div>
+        <div class="field"><label>Domicilio</label><input type="text" id="nc-dom" placeholder="Calle y número"></div>
+        <div class="row3">
+          <div class="field"><label>Código postal</label><input type="text" id="nc-cp" placeholder="CP"></div>
+          <div class="field"><label>Localidad</label><input type="text" id="nc-loc" placeholder="Localidad"></div>
+          <div class="field"><label>Provincia</label><input type="text" id="nc-prov" placeholder="Provincia"></div>
+        </div>
+        <div class="err-msg" id="nc-err"></div>
+        <button class="btn" style="margin-top:.5rem" onclick="guardarNuevoCliente()">Guardar cliente</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL CAMBIAR CLAVE -->
 <div class="modal-overlay" id="modal-clave">
   <div class="modal">
@@ -443,6 +477,20 @@ let usuario = null;
 let clientes = [];
 let gestiones = [];
 let clienteActual = null;
+
+// Auto-login si hay sesion guardada
+window.addEventListener('DOMContentLoaded', async () => {
+  const saved = sessionStorage.getItem('crm_usuario');
+  if(saved){
+    try {
+      usuario = JSON.parse(saved);
+      document.getElementById('topbar-nombre').textContent = usuario.nombre + ' ' + usuario.apellido;
+      document.getElementById('topbar-avatar').textContent = initials(usuario.nombre, usuario.apellido);
+      show('screen-app');
+      cargarDatos();
+    } catch(e){ sessionStorage.removeItem('crm_usuario'); }
+  }
+});
 
 // ─── HELPERS ────────────────────────────────────────────────
 function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
@@ -487,6 +535,7 @@ async function doLogin(){
       if(!data2 || !data2.length){ showErr('login-err','Código incorrecto.'); return; }
     }
     usuario = v;
+    sessionStorage.setItem('crm_usuario', JSON.stringify(v));
     document.getElementById('topbar-nombre').textContent = v.nombre + ' ' + v.apellido;
     document.getElementById('topbar-avatar').textContent = initials(v.nombre, v.apellido);
     show('screen-app');
@@ -497,6 +546,7 @@ async function doLogin(){
 // ─── LOGOUT ─────────────────────────────────────────────────
 function doLogout(){
   usuario=null; clientes=[]; gestiones=[]; clienteActual=null;
+  sessionStorage.removeItem('crm_usuario');
   document.getElementById('login-cod').value='';
   show('screen-login');
 }
@@ -819,6 +869,33 @@ async function borrarGestion(id){
     actualizarMetricas();
     cargarGestiones(clienteActual.id);
   } catch(e){ alert('Error: '+e.message); }
+}
+
+// ─── NUEVO CLIENTE ──────────────────────────────────────────
+function mostrarNuevoCliente(){
+  show('screen-nuevo-cliente');
+}
+
+async function guardarNuevoCliente(){
+  const nombre = document.getElementById('nc-nombre').value.trim();
+  if(!nombre){ showErr('nc-err','El nombre es obligatorio'); return; }
+  hideErr('nc-err');
+  const data = {
+    nombre,
+    cuit: document.getElementById('nc-cuit').value.trim()||null,
+    telefono: document.getElementById('nc-tel').value.trim()||null,
+    domicilio: document.getElementById('nc-dom').value.trim()||null,
+    codigo_postal: document.getElementById('nc-cp').value.trim()||null,
+    localidad: document.getElementById('nc-loc').value.trim()||null,
+    provincia: document.getElementById('nc-prov').value.trim()||null,
+    codigo_vendedor: usuario.codigo
+  };
+  try {
+    await sb('clientes', { method:'POST', body: JSON.stringify(data), headers:{Prefer:'return=minimal'} });
+    ['nc-nombre','nc-cuit','nc-tel','nc-dom','nc-cp','nc-loc','nc-prov'].forEach(id=>document.getElementById(id).value='');
+    await cargarDatos();
+    volverAClientes();
+  } catch(e){ showErr('nc-err','Error al guardar: '+e.message); }
 }
 
 // ─── CAMBIAR CLAVE ───────────────────────────────────────────
