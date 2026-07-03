@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM Comercial</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F5F4F0;
+  --card:#FFFFFF;
+  --border:#E2E0D8;
+  --text:#1C1C1A;
+  --muted:#7A7870;
+  --accent:#1B4F8A;
+  --accent-light:#E8EFF8;
+  --green:#2D6A2D;
+  --green-bg:#E6F4E6;
+  --amber:#8A5C00;
+  --amber-bg:#FDF3DC;
+  --red:#8A1F1F;
+  --red-bg:#FAEAEA;
+  --radius:10px;
+  --shadow:0 1px 4px rgba(0,0,0,.07);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+.screen{display:none}.screen.active{display:block}
+
+/* LOGIN */
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;width:100%;max-width:380px;box-shadow:var(--shadow)}
+.login-logo{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:1.5rem}
+.login-title{font-size:22px;font-weight:700;margin-bottom:.25rem}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:1.5rem}
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.field .input-wrap{position:relative}
+input,select,textarea{width:100%;font-size:14px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+input[readonly]{background:#f8f8f6;cursor:default}
+textarea{resize:vertical;min-height:70px}
+.eye-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:2px}
+.btn{background:var(--accent);color:#fff;border:none;padding:11px 20px;border-radius:8px;font-size:14px;cursor:pointer;font-weight:600;font-family:inherit;transition:opacity .15s;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{opacity:.88}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-full{width:100%;justify-content:center}
+.btn-outline{background:#fff;color:var(--text);border:1px solid var(--border)}
+.btn-outline:hover{background:var(--bg)}
+.btn-danger{background:#fff;color:var(--red);border:1px solid #f0c0c0}
+.btn-danger:hover{background:var(--red-bg)}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:6px}
+.btn-ghost{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;font-family:inherit;padding:4px 8px}
+.btn-ghost:hover{color:var(--text)}
+.err-msg{background:var(--red-bg);color:var(--red);border-radius:7px;padding:9px 12px;font-size:13px;margin-top:8px;display:none}
+
+/* APP LAYOUT */
+.app{display:grid;grid-template-rows:56px 1fr;min-height:100vh}
+.topbar{background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem;position:sticky;top:0;z-index:10}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.topbar-brand{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.topbar-sep{color:var(--border);font-size:18px}
+.topbar-user{font-size:14px;font-weight:600}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--accent-light);color:var(--accent);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.main-content{padding:1.25rem;max-width:780px;margin:0 auto;width:100%}
+
+/* TABS */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:1.25rem}
+.tab-btn{padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;font-family:inherit;transition:color .15s}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem;margin-bottom:.9rem;box-shadow:var(--shadow)}
+.card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.9rem;display:flex;justify-content:space-between;align-items:center}
+
+/* SEMAFORO */
+.sem{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0}
+.sem-green{background:#2D6A2D}
+.sem-amber{background:#F59E0B}
+.sem-red{background:#DC2626}
+.sem-gray{background:#ccc}
+
+/* BADGES */
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:5px;font-weight:600}
+.badge-green{background:var(--green-bg);color:var(--green)}
+.badge-amber{background:var(--amber-bg);color:var(--amber)}
+.badge-red{background:var(--red-bg);color:var(--red)}
+.badge-blue{background:var(--accent-light);color:var(--accent)}
+.badge-gray{background:#F0EEE8;color:var(--muted)}
+
+/* LISTA CLIENTES */
+.cliente-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.cliente-item:last-child{border-bottom:none}
+.cliente-item:hover{background:#fafaf8;margin:0 -1.1rem;padding:10px 1.1rem}
+.ci-info{flex:1;min-width:0}
+.ci-nombre{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ci-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.search-input{padding:9px 12px 9px 34px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237A7870' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center;border-radius:8px;font-size:13px}
+
+/* FICHA */
+.ficha-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem}
+.ficha-nombre{font-size:18px;font-weight:700}
+.ficha-num{font-size:12px;color:var(--muted);margin-top:2px}
+.datos-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;font-size:13px}
+.dato-lbl{color:var(--muted);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.dato-val{font-size:13px;margin-top:1px}
+
+/* CONTACTO INTERNO */
+.ci-card{background:var(--bg);border-radius:8px;padding:.8rem;margin-bottom:.6rem;position:relative}
+.ci-card .ci-nombre-int{font-size:13px;font-weight:700}
+.ci-card .ci-cargo{font-size:11px;color:var(--muted);margin-top:2px}
+.ci-card .ci-dato{font-size:12px;color:var(--muted);margin-top:4px}
+.tag-principal{display:inline-block;font-size:10px;padding:1px 5px;border-radius:4px;background:var(--accent-light);color:var(--accent);font-weight:700;margin-left:5px;vertical-align:middle}
+.delete-btn{position:absolute;top:8px;right:8px;background:none;border:none;cursor:pointer;color:#ccc;font-size:14px}
+.delete-btn:hover{color:var(--red)}
+
+/* GESTIONES */
+.gestion-item{padding:.8rem 0;border-bottom:1px solid var(--border)}
+.gestion-item:last-child{border-bottom:none}
+.gestion-hdr{display:flex;justify-content:space-between;align-items:flex-start}
+.gestion-fecha{font-size:12px;font-weight:700;color:var(--muted)}
+.gestion-body{font-size:12px;color:var(--muted);margin-top:4px}
+
+/* NOVEDADES */
+.novedad-item{padding:.9rem 0;border-bottom:1px solid var(--border)}
+.novedad-item:last-child{border-bottom:none}
+.novedad-titulo{font-size:14px;font-weight:700;margin-bottom:4px}
+.novedad-contenido{font-size:13px;color:var(--muted);margin-bottom:8px}
+.novedad-img{width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-bottom:8px}
+
+/* METRICAS */
+.metric-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;margin-bottom:1rem}
+.metric{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:.8rem;text-align:center}
+.metric-val{font-size:24px;font-weight:700}
+.metric-lbl{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* FORM INLINE */
+.form-block{background:var(--bg);border-radius:8px;padding:1rem;margin-top:.8rem}
+.form-block-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.8rem}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.toggle-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.toggle-btn{padding:8px 14px;border-radius:7px;border:1px solid var(--border);font-size:13px;cursor:pointer;color:var(--muted);background:#fff;font-family:inherit;transition:all .15s;font-weight:500}
+.toggle-btn.sel{border-color:var(--accent);color:var(--accent);background:var(--accent-light);font-weight:700}
+.toggle-btn.sel-green{border-color:var(--green);color:var(--green);background:var(--green-bg)}
+.toggle-btn.sel-red{border-color:var(--red);color:var(--red);background:var(--red-bg)}
+.cond{display:none}.cond.show{display:block}
+.spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:2rem;color:var(--muted);font-size:13px}
+.loading{text-align:center;padding:1.5rem;color:var(--muted);font-size:13px}
+
+/* CAMBIAR CLAVE */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:none;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:1.5rem;width:100%;max-width:360px}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:1rem}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="screen active" id="screen-login">
+  <div class="login-page">
+    <div class="login-box">
+      <div class="login-logo">Gestión Comercial</div>
+      <div class="login-title">Bienvenido</div>
+      <div class="login-sub">Ingresá tu código para continuar</div>
+      <div class="field">
+        <label>Tu código de acceso</label>
+        <div class="input-wrap">
+          <input type="password" id="login-cod" placeholder="Tu código..." onkeydown="if(event.key==='Enter')doLogin()">
+          <button class="eye-btn" type="button" onclick="toggleEye('login-cod',this)">👁</button>
+        </div>
+      </div>
+      <button class="btn btn-full" onclick="doLogin()">Entrar</button>
+      <div class="err-msg" id="login-err">Código incorrecto. Verificá mayúsculas.</div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="screen" id="screen-app">
+  <div class="app">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-brand">CRM</div>
+        <div class="topbar-sep">|</div>
+        <div class="topbar-user" id="topbar-nombre"></div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-outline btn-sm" onclick="openCambioClave()">🔑 Cambiar clave</button>
+        <div class="avatar" id="topbar-avatar"></div>
+        <button class="btn-ghost" onclick="doLogout()">Salir</button>
+      </div>
+    </div>
+    <div class="main-content">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('clientes')">Mis clientes</button>
+        <button class="tab-btn" onclick="showTab('novedades')">Novedades</button>
+      </div>
+
+      <!-- TAB CLIENTES -->
+      <div id="tab-clientes">
+        <div class="metric-row">
+          <div class="metric"><div class="metric-val" id="m-total">0</div><div class="metric-lbl">Clientes</div></div>
+          <div class="metric"><div class="metric-val" id="m-aldia" style="color:var(--green)">0</div><div class="metric-lbl">Al día</div></div>
+          <div class="metric"><div class="metric-val" id="m-atencion" style="color:#DC2626">0</div><div class="metric-lbl">Atención</div></div>
+        </div>
+        <div class="card" style="padding:.75rem 1.1rem;margin-bottom:.9rem">
+          <input class="search-input" type="text" id="search-cli" placeholder="Buscar cliente..." oninput="renderClientes()" style="border:none;outline:none;width:100%;font-size:13px">
+        </div>
+        <div class="card" style="padding:.5rem 1.1rem">
+          <div style="display:flex;gap:12px;font-size:11px;color:var(--muted);padding:.4rem 0 .6rem;flex-wrap:wrap">
+            <span><span class="sem sem-green" style="display:inline-block;vertical-align:middle;margin-right:4px"></span>Último mes</span>
+            <span><span class="sem sem-amber" style="display:inline-block;vertical-align:middle;margin-right:4px"></span>1 a 3 meses</span>
+            <span><span class="sem sem-red" style="display:inline-block;vertical-align:middle;margin-right:4px"></span>Más de 3 meses</span>
+          </div>
+          <div id="lista-clientes"><div class="loading">Cargando...</div></div>
+        </div>
+      </div>
+
+      <!-- TAB NOVEDADES -->
+      <div id="tab-novedades" style="display:none">
+        <div class="card">
+          <div id="lista-novedades"><div class="loading">Cargando...</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FICHA CLIENTE -->
+<div class="screen" id="screen-ficha">
+  <div class="app">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="btn-ghost" onclick="volverAClientes()">← Volver</button>
+      </div>
+      <div class="topbar-right">
+        <button class="btn-ghost" onclick="doLogout()">Salir</button>
+      </div>
+    </div>
+    <div class="main-content">
+      <div class="card">
+        <div class="ficha-hdr">
+          <div>
+            <div class="ficha-nombre" id="f-nombre"></div>
+            <div class="ficha-num" id="f-num"></div>
+          </div>
+          <div id="f-sem"></div>
+        </div>
+        <div class="datos-grid" id="f-datos"></div>
+        <div style="margin-top:.9rem;display:flex;gap:8px;flex-wrap:wrap" id="f-edit-btns">
+          <button class="btn btn-outline btn-sm" onclick="toggleEditCliente()">✏️ Editar datos</button>
+        </div>
+        <!-- Editar datos cliente -->
+        <div id="edit-cliente-form" style="display:none;margin-top:1rem">
+          <div class="form-block">
+            <div class="form-block-title">Editar datos del cliente</div>
+            <div class="row2">
+              <div class="field"><label>Teléfono</label><input type="text" id="ec-tel"></div>
+              <div class="field"><label>CUIT</label><input type="text" id="ec-cuit" readonly></div>
+            </div>
+            <div class="field"><label>Domicilio</label><input type="text" id="ec-dom"></div>
+            <div class="row3">
+              <div class="field"><label>CP</label><input type="text" id="ec-cp"></div>
+              <div class="field"><label>Localidad</label><input type="text" id="ec-loc"></div>
+              <div class="field"><label>Provincia</label><input type="text" id="ec-prov"></div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:.5rem">
+              <button class="btn btn-sm" onclick="guardarEditCliente()">Guardar</button>
+              <button class="btn btn-outline btn-sm" onclick="toggleEditCliente()">Cancelar</button>
+            </div>
+            <div class="err-msg" id="ec-err"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contactos internos -->
+      <div class="card">
+        <div class="card-title">
+          Contactos internos
+          <button class="btn btn-sm" onclick="toggleFormContactoInt()">+ Agregar</button>
+        </div>
+        <div id="lista-ci"><div class="loading">Cargando...</div></div>
+        <div id="form-ci" style="display:none">
+          <div class="form-block">
+            <div class="form-block-title">Nuevo contacto</div>
+            <div class="row2">
+              <div class="field"><label>Nombre</label><input type="text" id="ci-nom" placeholder="Nombre"></div>
+              <div class="field"><label>Apellido</label><input type="text" id="ci-ape" placeholder="Apellido"></div>
+            </div>
+            <div class="field"><label>Cargo / Función</label>
+              <select id="ci-cargo">
+                <option value="">Seleccionar...</option>
+                <option>Dueño/a</option><option>Encargado/a</option><option>Compras</option>
+                <option>Pagos</option><option>Entregas</option><option>Otro</option>
+              </select>
+            </div>
+            <div class="row2">
+              <div class="field"><label>Teléfono / Cel</label><input type="text" id="ci-tel" placeholder="Tel"></div>
+              <div class="field"><label>Mail</label><input type="text" id="ci-mail" placeholder="mail@ejemplo.com"></div>
+            </div>
+            <div class="field"><label>Domicilio de entrega</label><input type="text" id="ci-dom" placeholder="Domicilio"></div>
+            <div class="field" style="display:flex;align-items:center;gap:8px">
+              <input type="checkbox" id="ci-principal" style="width:auto">
+              <label for="ci-principal" style="margin:0;cursor:pointer;font-size:13px;color:var(--text)">Contacto principal</label>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:.5rem">
+              <button class="btn btn-sm" onclick="guardarCI()">Guardar</button>
+              <button class="btn btn-outline btn-sm" onclick="toggleFormContactoInt()">Cancelar</button>
+            </div>
+            <div class="err-msg" id="ci-err"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Registrar gestión -->
+      <div class="card">
+        <div class="card-title">
+          Registrar gestión
+          <button class="btn btn-sm" onclick="toggleFormGestion()">+ Nueva</button>
+        </div>
+        <div id="form-gestion" style="display:none">
+          <div class="form-block">
+            <div class="form-block-title">Nueva gestión</div>
+            <div class="row2">
+              <div class="field"><label>Fecha del contacto *</label><input type="date" id="g-fecha"></div>
+              <div class="field"><label>Tipo de contacto *</label>
+                <select id="g-tipo">
+                  <option value="">Seleccionar...</option>
+                  <option>Teléfono</option><option>WhatsApp</option><option>Presencial</option>
+                </select>
+              </div>
+            </div>
+            <div class="field"><label>Resultado *</label>
+              <div class="toggle-row">
+                <button type="button" class="toggle-btn" onclick="setResultado(this,'va_a_comprar')">✅ Va a comprar</button>
+                <button type="button" class="toggle-btn" onclick="setResultado(this,'lo_analiza')">🤔 Lo va a analizar</button>
+                <button type="button" class="toggle-btn" onclick="setResultado(this,'no_compra')">❌ No va a comprar</button>
+              </div>
+              <input type="hidden" id="g-resultado">
+            </div>
+
+            <!-- Si va a comprar -->
+            <div class="cond" id="bloque-compra">
+              <div class="form-block" style="background:#fff;border:1px solid var(--border)">
+                <div class="form-block-title">Detalles del pedido</div>
+                <div class="field"><label>Fecha último pedido</label><input type="date" id="g-fecha-pedido"></div>
+                <div class="field"><label>Rubro</label>
+                  <div class="toggle-row">
+                    <button type="button" class="toggle-btn" onclick="setRubro(this,'Accesorios')">Accesorios</button>
+                    <button type="button" class="toggle-btn" onclick="setRubro(this,'Indumentaria PROCER')">Indumentaria PROCER</button>
+                    <button type="button" class="toggle-btn" onclick="setRubro(this,'Indumentaria WILSON')">Indumentaria WILSON</button>
+                  </div>
+                  <input type="hidden" id="g-rubro">
+                </div>
+              </div>
+            </div>
+
+            <!-- Si no compra -->
+            <div class="cond" id="bloque-no-compra">
+              <div class="form-block" style="background:#fff;border:1px solid var(--border)">
+                <div class="form-block-title">Motivo de no compra</div>
+                <div class="field">
+                  <div class="toggle-row">
+                    <button type="button" class="toggle-btn" onclick="setMotivo(this,'Tiene stock')">Tiene stock</button>
+                    <button type="button" class="toggle-btn" onclick="setMotivo(this,'Problemas financieros')">Problemas financieros</button>
+                    <button type="button" class="toggle-btn" onclick="setMotivo(this,'Le compra a la competencia')">Le compra a la competencia</button>
+                  </div>
+                  <input type="hidden" id="g-motivo">
+                </div>
+                <div class="cond" id="bloque-competencia">
+                  <div class="field"><label>¿Qué hace que le compre a la competencia?</label>
+                    <div class="toggle-row">
+                      <button type="button" class="toggle-btn" onclick="setCompetencia(this,'Condiciones comerciales')">Condiciones comerciales</button>
+                      <button type="button" class="toggle-btn" onclick="setCompetencia(this,'Condiciones financieras')">Condiciones financieras</button>
+                      <button type="button" class="toggle-btn" onclick="setCompetencia(this,'Servicio')">Servicio</button>
+                    </div>
+                    <input type="hidden" id="g-competencia">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="field"><label>Comentarios</label>
+              <textarea id="g-comentarios" placeholder="Notas, observaciones..."></textarea>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:.5rem">
+              <button class="btn btn-sm" id="btn-guardar-g" onclick="guardarGestion()">Guardar gestión</button>
+              <button class="btn btn-outline btn-sm" onclick="toggleFormGestion()">Cancelar</button>
+            </div>
+            <div class="err-msg" id="g-err"></div>
+          </div>
+        </div>
+
+        <!-- Historial -->
+        <div id="historial-gestiones"><div class="loading">Cargando...</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CAMBIAR CLAVE -->
+<div class="modal-overlay" id="modal-clave">
+  <div class="modal">
+    <div class="modal-title">🔑 Cambiar clave</div>
+    <div class="field">
+      <label>Clave actual</label>
+      <div class="input-wrap">
+        <input type="password" id="cc-actual" placeholder="Clave actual">
+        <button class="eye-btn" type="button" onclick="toggleEye('cc-actual',this)">👁</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Nueva clave</label>
+      <div class="input-wrap">
+        <input type="password" id="cc-nueva" placeholder="Nueva clave">
+        <button class="eye-btn" type="button" onclick="toggleEye('cc-nueva',this)">👁</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Repetir nueva clave</label>
+      <div class="input-wrap">
+        <input type="password" id="cc-repetir" placeholder="Repetir clave">
+        <button class="eye-btn" type="button" onclick="toggleEye('cc-repetir',this)">👁</button>
+      </div>
+    </div>
+    <div class="err-msg" id="cc-err"></div>
+    <div style="display:flex;gap:8px;margin-top:.5rem">
+      <button class="btn btn-sm" onclick="guardarClave()">Guardar</button>
+      <button class="btn btn-outline btn-sm" onclick="closeCambioClave()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB = 'https://jybpleomezzvvvzjscji.supabase.co';
+const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5YnBsZW9tZXp6dnZ2empzY2ppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNjQwNDIsImV4cCI6MjA5Nzg0MDA0Mn0.KSCwUaDp6KQPo761mRmQi4VGR6xTEZZfPyuo2Z5XzU0';
+
+let usuario = null;
+let clientes = [];
+let gestiones = [];
+let clienteActual = null;
+
+// ─── HELPERS ────────────────────────────────────────────────
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function initials(n,a){ return ((n||'')[0]+(a||'')[0]).toUpperCase(); }
+function fmt(d){ if(!d)return'—'; try{ const[y,m,dd]=d.split('-'); return`${dd}/${m}/${y}`; }catch(e){return d;} }
+function toggleEye(inputId,btn){ const i=document.getElementById(inputId); i.type=i.type==='password'?'text':'password'; btn.textContent=i.type==='password'?'👁':'🙈'; }
+function showErr(id,msg){ const e=document.getElementById(id); e.textContent=msg; e.style.display='block'; }
+function hideErr(id){ document.getElementById(id).style.display='none'; }
+
+async function sb(path, opts={}){
+  const headers = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}`, 'Content-Type': 'application/json', ...opts.headers };
+  const res = await fetch(`${SB}/rest/v1/${path}`, { ...opts, headers });
+  if(opts.method==='DELETE' || (opts.method==='POST' && opts.headers?.Prefer==='return=minimal') || (opts.method==='PATCH' && opts.headers?.Prefer==='return=minimal')) return null;
+  if(!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+function semaforo(fecha){
+  if(!fecha) return { cls:'sem-gray', badge:'badge-gray', txt:'Sin gestión' };
+  const dias = Math.floor((new Date() - new Date(fecha)) / 86400000);
+  if(dias<=30) return { cls:'sem-green', badge:'badge-green', txt:'Al día' };
+  if(dias<=90) return { cls:'sem-amber', badge:'badge-amber', txt:'+1 mes' };
+  return { cls:'sem-red', badge:'badge-red', txt:'+3 meses' };
+}
+
+function ultimaGestion(clienteId){
+  const gg = gestiones.filter(g=>g.cliente_id===clienteId).sort((a,b)=>new Date(b.fecha_contacto)-new Date(a.fecha_contacto));
+  return gg.length ? gg[0].fecha_contacto : null;
+}
+
+// ─── LOGIN ───────────────────────────────────────────────────
+async function doLogin(){
+  const cod = document.getElementById('login-cod').value.trim().toUpperCase();
+  hideErr('login-err');
+  try {
+    const data = await sb(`vendedores?codigo=eq.${cod}`);
+    if(!data || !data.length){ showErr('login-err','Código incorrecto. Verificá mayúsculas.'); return; }
+    const v = data[0];
+    if(v.clave !== cod && v.clave !== document.getElementById('login-cod').value.trim()){ 
+      // Verificar clave exacta (puede haber sido cambiada)
+      const data2 = await sb(`vendedores?codigo=eq.${cod}&clave=eq.${document.getElementById('login-cod').value.trim()}`);
+      if(!data2 || !data2.length){ showErr('login-err','Código incorrecto.'); return; }
+    }
+    usuario = v;
+    document.getElementById('topbar-nombre').textContent = v.nombre + ' ' + v.apellido;
+    document.getElementById('topbar-avatar').textContent = initials(v.nombre, v.apellido);
+    show('screen-app');
+    cargarDatos();
+  } catch(e){ showErr('login-err','Error de conexión'); }
+}
+
+// ─── LOGOUT ─────────────────────────────────────────────────
+function doLogout(){
+  usuario=null; clientes=[]; gestiones=[]; clienteActual=null;
+  document.getElementById('login-cod').value='';
+  show('screen-login');
+}
+
+// ─── CARGA DE DATOS ─────────────────────────────────────────
+async function cargarDatos(){
+  try {
+    const [cli, gest] = await Promise.all([
+      sb(`clientes?codigo_vendedor=eq.${usuario.codigo}&order=nombre.asc`),
+      sb(`gestiones?codigo_vendedor=eq.${usuario.codigo}&order=fecha_contacto.desc`)
+    ]);
+    clientes = cli || [];
+    gestiones = gest || [];
+    actualizarMetricas();
+    renderClientes();
+    renderNovedades();
+  } catch(e){ console.error(e); }
+}
+
+function actualizarMetricas(){
+  const total = clientes.length;
+  let aldia=0, atencion=0;
+  clientes.forEach(c=>{
+    const ult = ultimaGestion(c.id);
+    const s = semaforo(ult);
+    if(s.cls==='sem-green') aldia++;
+    if(s.cls==='sem-red') atencion++;
+  });
+  document.getElementById('m-total').textContent = total;
+  document.getElementById('m-aldia').textContent = aldia;
+  document.getElementById('m-atencion').textContent = atencion;
+}
+
+function renderClientes(){
+  const filtro = document.getElementById('search-cli').value.toLowerCase();
+  const el = document.getElementById('lista-clientes');
+  let lista = clientes;
+  if(filtro) lista = lista.filter(c=>c.nombre.toLowerCase().includes(filtro)||(c.localidad||'').toLowerCase().includes(filtro));
+  if(!lista.length){ el.innerHTML='<div class="empty-state">No hay clientes</div>'; return; }
+  el.innerHTML = lista.map(c=>{
+    const ult = ultimaGestion(c.id);
+    const s = semaforo(ult);
+    return `<div class="cliente-item" onclick="abrirFicha(${c.id})">
+      <div class="sem ${s.cls}"></div>
+      <div class="ci-info">
+        <div class="ci-nombre">${c.nombre}</div>
+        <div class="ci-sub">${c.localidad||''} · ${c.provincia||''}</div>
+      </div>
+      <span class="badge ${s.badge}">${s.txt}</span>
+    </div>`;
+  }).join('');
+}
+
+// ─── TABS ────────────────────────────────────────────────────
+function showTab(name){
+  document.querySelectorAll('.tab-btn').forEach((t,i)=>t.classList.toggle('active',['clientes','novedades'][i]===name));
+  document.getElementById('tab-clientes').style.display=name==='clientes'?'block':'none';
+  document.getElementById('tab-novedades').style.display=name==='novedades'?'block':'none';
+}
+
+// ─── NOVEDADES ───────────────────────────────────────────────
+async function renderNovedades(){
+  const el = document.getElementById('lista-novedades');
+  try {
+    const data = await sb(`novedades?or=(codigo_vendedor.eq.${usuario.codigo},codigo_vendedor.eq.TODOS)&order=created_at.desc`);
+    if(!data||!data.length){ el.innerHTML='<div class="empty-state">Sin novedades por ahora</div>'; return; }
+    el.innerHTML = data.map(n=>`
+      <div class="novedad-item">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+          <div class="novedad-titulo">${n.titulo||''}</div>
+          <span class="badge ${n.estado==='realizado'?'badge-green':'badge-amber'}">${n.estado==='realizado'?'Realizado':'Pendiente'}</span>
+        </div>
+        ${n.imagen_url?`<img src="${n.imagen_url}" class="novedad-img" onerror="this.style.display='none'">`:''}
+        <div class="novedad-contenido">${n.contenido||''}</div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          ${n.estado==='pendiente'?`<button class="btn btn-sm" style="background:var(--green)" onclick="cambiarEstadoNovedad(${n.id},'realizado')">✓ Marcar realizado</button>`:''}
+          ${n.estado==='realizado'?`<button class="btn btn-outline btn-sm" onclick="cambiarEstadoNovedad(${n.id},'pendiente')">↩ Marcar pendiente</button>`:''}
+        </div>
+      </div>`).join('');
+  } catch(e){ el.innerHTML='<div class="empty-state">Error al cargar</div>'; }
+}
+
+async function cambiarEstadoNovedad(id, estado){
+  try {
+    await sb(`novedades?id=eq.${id}`, { method:'PATCH', body: JSON.stringify({estado}), headers:{Prefer:'return=minimal'} });
+    renderNovedades();
+  } catch(e){ alert('Error: '+e.message); }
+}
+
+// ─── FICHA CLIENTE ───────────────────────────────────────────
+async function abrirFicha(id){
+  clienteActual = clientes.find(c=>c.id===id);
+  const c = clienteActual;
+  const ult = ultimaGestion(c.id);
+  const s = semaforo(ult);
+
+  document.getElementById('f-nombre').textContent = c.nombre;
+  document.getElementById('f-num').textContent = 'Cliente Nº ' + c.numero_cliente;
+  document.getElementById('f-sem').innerHTML = `<span class="badge ${s.badge}">${s.txt}</span>`;
+  document.getElementById('f-datos').innerHTML = `
+    <div><div class="dato-lbl">CUIT</div><div class="dato-val">${c.cuit||'—'}</div></div>
+    <div><div class="dato-lbl">Teléfono</div><div class="dato-val">${c.telefono||'—'}</div></div>
+    <div><div class="dato-lbl">Localidad</div><div class="dato-val">${c.localidad||'—'}</div></div>
+    <div><div class="dato-lbl">Provincia</div><div class="dato-val">${c.provincia||'—'}</div></div>
+    <div style="grid-column:span 2"><div class="dato-lbl">Domicilio</div><div class="dato-val">${c.domicilio||'—'}</div></div>`;
+
+  // Pre-llenar form edición
+  document.getElementById('ec-tel').value = c.telefono||'';
+  document.getElementById('ec-cuit').value = c.cuit||'';
+  document.getElementById('ec-dom').value = c.domicilio||'';
+  document.getElementById('ec-cp').value = c.codigo_postal||'';
+  document.getElementById('ec-loc').value = c.localidad||'';
+  document.getElementById('ec-prov').value = c.provincia||'';
+
+  show('screen-ficha');
+  document.getElementById('edit-cliente-form').style.display='none';
+  document.getElementById('form-ci').style.display='none';
+  document.getElementById('form-gestion').style.display='none';
+
+  cargarCI(id);
+  cargarGestiones(id);
+}
+
+function volverAClientes(){ show('screen-app'); }
+
+function toggleEditCliente(){
+  const f = document.getElementById('edit-cliente-form');
+  f.style.display = f.style.display==='none'?'block':'none';
+}
+
+async function guardarEditCliente(){
+  const c = clienteActual;
+  const data = {
+    telefono: document.getElementById('ec-tel').value.trim()||null,
+    domicilio: document.getElementById('ec-dom').value.trim()||null,
+    codigo_postal: document.getElementById('ec-cp').value.trim()||null,
+    localidad: document.getElementById('ec-loc').value.trim()||null,
+    provincia: document.getElementById('ec-prov').value.trim()||null,
+  };
+  try {
+    await sb(`clientes?id=eq.${c.id}`, { method:'PATCH', body: JSON.stringify(data), headers:{Prefer:'return=minimal'} });
+    Object.assign(clienteActual, data);
+    const idx = clientes.findIndex(x=>x.id===c.id);
+    if(idx>=0) Object.assign(clientes[idx], data);
+    toggleEditCliente();
+    abrirFicha(c.id);
+  } catch(e){ showErr('ec-err',e.message); }
+}
+
+// ─── CONTACTOS INTERNOS ─────────────────────────────────────
+async function cargarCI(clienteId){
+  const el = document.getElementById('lista-ci');
+  el.innerHTML='<div class="loading">Cargando...</div>';
+  try {
+    const data = await sb(`contactos_cliente?cliente_id=eq.${clienteId}&order=es_principal.desc`);
+    if(!data||!data.length){ el.innerHTML='<div class="empty-state">Sin contactos internos</div>'; return; }
+    el.innerHTML = data.map(ci=>`
+      <div class="ci-card">
+        <button class="delete-btn" onclick="borrarCI(${ci.id})" title="Eliminar">🗑</button>
+        <div class="ci-nombre-int">${ci.nombre||''} ${ci.apellido||''} ${ci.es_principal?'<span class="tag-principal">Principal</span>':''}</div>
+        <div class="ci-cargo">${ci.cargo||''}</div>
+        ${ci.telefono?`<div class="ci-dato">📞 ${ci.telefono}</div>`:''}
+        ${ci.mail?`<div class="ci-dato">✉️ ${ci.mail}</div>`:''}
+        ${ci.domicilio_entrega?`<div class="ci-dato">📦 ${ci.domicilio_entrega}</div>`:''}
+      </div>`).join('');
+  } catch(e){ el.innerHTML='<div class="empty-state">Error al cargar</div>'; }
+}
+
+function toggleFormContactoInt(){
+  const f = document.getElementById('form-ci');
+  f.style.display = f.style.display==='none'?'block':'none';
+}
+
+async function guardarCI(){
+  const data = {
+    cliente_id: clienteActual.id,
+    nombre: document.getElementById('ci-nom').value.trim()||null,
+    apellido: document.getElementById('ci-ape').value.trim()||null,
+    cargo: document.getElementById('ci-cargo').value||null,
+    telefono: document.getElementById('ci-tel').value.trim()||null,
+    mail: document.getElementById('ci-mail').value.trim()||null,
+    domicilio_entrega: document.getElementById('ci-dom').value.trim()||null,
+    es_principal: document.getElementById('ci-principal').checked
+  };
+  if(!data.nombre){ showErr('ci-err','El nombre es obligatorio'); return; }
+  hideErr('ci-err');
+  try {
+    await sb('contactos_cliente', { method:'POST', body: JSON.stringify(data), headers:{Prefer:'return=minimal'} });
+    ['ci-nom','ci-ape','ci-tel','ci-mail','ci-dom'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('ci-cargo').value='';
+    document.getElementById('ci-principal').checked=false;
+    toggleFormContactoInt();
+    cargarCI(clienteActual.id);
+  } catch(e){ showErr('ci-err',e.message); }
+}
+
+async function borrarCI(id){
+  if(!confirm('¿Eliminar este contacto?')) return;
+  try {
+    await sb(`contactos_cliente?id=eq.${id}`, { method:'DELETE', headers:{Prefer:'return=minimal'} });
+    cargarCI(clienteActual.id);
+  } catch(e){ alert('Error: '+e.message); }
+}
+
+// ─── GESTIONES ───────────────────────────────────────────────
+async function cargarGestiones(clienteId){
+  const el = document.getElementById('historial-gestiones');
+  el.innerHTML='<div class="loading">Cargando...</div>';
+  try {
+    const data = await sb(`gestiones?cliente_id=eq.${clienteId}&order=fecha_contacto.desc`);
+    if(!data||!data.length){ el.innerHTML='<div class="empty-state">Sin gestiones registradas</div>'; return; }
+    el.innerHTML = data.map(g=>{
+      const res = g.resultado==='va_a_comprar'?'Va a comprar':g.resultado==='lo_analiza'?'Lo va a analizar':'No va a comprar';
+      const badge = g.resultado==='va_a_comprar'?'badge-green':g.resultado==='lo_analiza'?'badge-amber':'badge-red';
+      return `<div class="gestion-item">
+        <div class="gestion-hdr">
+          <div>
+            <span class="gestion-fecha">${fmt(g.fecha_contacto)}</span>
+            <span class="badge badge-gray" style="margin-left:6px">${g.tipo_contacto||''}</span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span class="badge ${badge}">${res}</span>
+            <button class="delete-btn" style="position:static" onclick="borrarGestion(${g.id})" title="Eliminar">🗑</button>
+          </div>
+        </div>
+        <div class="gestion-body">
+          ${g.rubro?`<span class="badge badge-blue" style="margin-right:4px">${g.rubro}</span>`:''}
+          ${g.fecha_ultimo_pedido?`📦 Último pedido: ${fmt(g.fecha_ultimo_pedido)}<br>`:''}
+          ${g.motivo_no_compra?`Motivo: ${g.motivo_no_compra}${g.motivo_competencia?' · '+g.motivo_competencia:''}<br>`:''}
+          ${g.comentarios?`💬 ${g.comentarios}`:''}
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e){ el.innerHTML='<div class="empty-state">Error al cargar</div>'; }
+}
+
+function toggleFormGestion(){
+  const f = document.getElementById('form-gestion');
+  f.style.display = f.style.display==='none'?'block':'none';
+  if(f.style.display==='block'){
+    document.getElementById('g-fecha').valueAsDate = new Date();
+  }
+}
+
+function setResultado(el, val){
+  document.querySelectorAll('#form-gestion .toggle-btn[onclick*="setResultado"]').forEach(b=>b.classList.remove('sel','sel-green','sel-red'));
+  el.classList.add(val==='va_a_comprar'?'sel-green':val==='no_compra'?'sel-red':'sel');
+  document.getElementById('g-resultado').value = val;
+  document.getElementById('bloque-compra').classList.toggle('show', val==='va_a_comprar');
+  document.getElementById('bloque-no-compra').classList.toggle('show', val==='no_compra');
+}
+
+function setRubro(el, val){
+  document.querySelectorAll('#bloque-compra .toggle-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('g-rubro').value = val;
+}
+
+function setMotivo(el, val){
+  document.querySelectorAll('#bloque-no-compra .toggle-btn[onclick*="setMotivo"]').forEach(b=>b.classList.remove('sel','sel-red'));
+  el.classList.add('sel-red');
+  document.getElementById('g-motivo').value = val;
+  document.getElementById('bloque-competencia').classList.toggle('show', val==='Le compra a la competencia');
+}
+
+function setCompetencia(el, val){
+  document.querySelectorAll('#bloque-competencia .toggle-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('g-competencia').value = val;
+}
+
+async function guardarGestion(){
+  const resultado = document.getElementById('g-resultado').value;
+  const fecha = document.getElementById('g-fecha').value;
+  const tipo = document.getElementById('g-tipo').value;
+  if(!fecha||!tipo||!resultado){ showErr('g-err','Completá todos los campos obligatorios'); return; }
+  hideErr('g-err');
+  const btn = document.getElementById('btn-guardar-g');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>';
+  const data = {
+    cliente_id: clienteActual.id,
+    codigo_vendedor: usuario.codigo,
+    fecha_contacto: fecha,
+    tipo_contacto: tipo,
+    resultado,
+    motivo_no_compra: document.getElementById('g-motivo').value||null,
+    motivo_competencia: document.getElementById('g-competencia').value||null,
+    rubro: document.getElementById('g-rubro').value||null,
+    fecha_ultimo_pedido: document.getElementById('g-fecha-pedido').value||null,
+    comentarios: document.getElementById('g-comentarios').value.trim()||null
+  };
+  try {
+    await sb('gestiones', { method:'POST', body: JSON.stringify(data), headers:{Prefer:'return=minimal'} });
+    // Limpiar form
+    document.getElementById('g-tipo').value='';
+    document.getElementById('g-resultado').value='';
+    document.getElementById('g-rubro').value='';
+    document.getElementById('g-motivo').value='';
+    document.getElementById('g-competencia').value='';
+    document.getElementById('g-fecha-pedido').value='';
+    document.getElementById('g-comentarios').value='';
+    document.querySelectorAll('#form-gestion .toggle-btn').forEach(b=>b.classList.remove('sel','sel-green','sel-red'));
+    ['bloque-compra','bloque-no-compra','bloque-competencia'].forEach(id=>document.getElementById(id).classList.remove('show'));
+    toggleFormGestion();
+    // Recargar gestiones y actualizar semáforo
+    const gest = await sb(`gestiones?codigo_vendedor=eq.${usuario.codigo}&order=fecha_contacto.desc`);
+    gestiones = gest||[];
+    actualizarMetricas();
+    cargarGestiones(clienteActual.id);
+  } catch(e){ showErr('g-err',e.message); }
+  finally{ btn.disabled=false; btn.innerHTML='Guardar gestión'; }
+}
+
+async function borrarGestion(id){
+  if(!confirm('¿Eliminar esta gestión? Esta acción no se puede deshacer.')) return;
+  try {
+    await sb(`gestiones?id=eq.${id}`, { method:'DELETE', headers:{Prefer:'return=minimal'} });
+    const gest = await sb(`gestiones?codigo_vendedor=eq.${usuario.codigo}&order=fecha_contacto.desc`);
+    gestiones = gest||[];
+    actualizarMetricas();
+    cargarGestiones(clienteActual.id);
+  } catch(e){ alert('Error: '+e.message); }
+}
+
+// ─── CAMBIAR CLAVE ───────────────────────────────────────────
+function openCambioClave(){ document.getElementById('modal-clave').classList.add('open'); }
+function closeCambioClave(){ document.getElementById('modal-clave').classList.remove('open'); hideErr('cc-err'); }
+
+async function guardarClave(){
+  const actual = document.getElementById('cc-actual').value.trim();
+  const nueva = document.getElementById('cc-nueva').value.trim();
+  const repetir = document.getElementById('cc-repetir').value.trim();
+  hideErr('cc-err');
+  if(actual !== usuario.clave){ showErr('cc-err','La clave actual no es correcta'); return; }
+  if(!nueva||nueva.length<4){ showErr('cc-err','La nueva clave debe tener al menos 4 caracteres'); return; }
+  if(nueva !== repetir){ showErr('cc-err','Las claves no coinciden'); return; }
+  try {
+    await sb(`vendedores?id=eq.${usuario.id}`, { method:'PATCH', body: JSON.stringify({clave: nueva}), headers:{Prefer:'return=minimal'} });
+    usuario.clave = nueva;
+    closeCambioClave();
+    alert('✅ Clave actualizada correctamente');
+  } catch(e){ showErr('cc-err','Error al guardar: '+e.message); }
+}
+</script>
+</body>
+</html>
