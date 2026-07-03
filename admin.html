@@ -211,6 +211,25 @@ textarea{resize:vertical;min-height:80px}
   </div>
 </div>
 
+<!-- MODAL FICHA CLIENTE -->
+<div class="modal-overlay" id="modal-ficha">
+  <div class="modal" style="max-width:600px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem">
+      <div>
+        <div class="modal-title" style="margin-bottom:2px" id="ficha-cli-nombre"></div>
+        <div style="font-size:12px;color:var(--muted)" id="ficha-cli-num"></div>
+      </div>
+      <div id="ficha-cli-sem"></div>
+    </div>
+    <div id="ficha-cli-datos" style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;font-size:13px;margin-bottom:1rem"></div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.6rem">Historial de gestiones</div>
+    <div id="ficha-cli-gestiones"><div class="loading">Cargando...</div></div>
+    <div style="margin-top:1rem;text-align:right">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('modal-ficha')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL VER CLIENTES VENDEDOR -->
 <div class="modal-overlay" id="modal-clientes">
   <div class="modal">
@@ -461,15 +480,57 @@ function renderModalClientes(lista){
   if(!lista.length){ el.innerHTML='<div class="empty-state">Sin clientes</div>'; return; }
   el.innerHTML = lista.map(c=>{
     const s = semaforo(ultimaGestion(c.id));
-    return `<div class="cliente-row">
+    return `<div class="cliente-row" onclick="abrirFichaCliente(${c.id})" style="cursor:pointer">
       <div class="sem ${s.cls}"></div>
       <div style="flex:1">
         <div style="font-weight:600;font-size:13px">${c.nombre}</div>
         <div style="font-size:11px;color:var(--muted)">${c.localidad||''} · ${c.provincia||''}</div>
       </div>
       <span class="badge ${s.badge}">${s.txt}</span>
+      <span style="font-size:11px;color:var(--muted);margin-left:4px">→</span>
     </div>`;
   }).join('');
+}
+
+async function abrirFichaCliente(id){
+  const c = clientes.find(x=>x.id===id);
+  if(!c) return;
+  const s = semaforo(ultimaGestion(c.id));
+  document.getElementById('ficha-cli-nombre').textContent = c.nombre;
+  document.getElementById('ficha-cli-num').textContent = 'Cliente N\u00ba ' + c.numero_cliente;
+  document.getElementById('ficha-cli-sem').innerHTML = '<span class="badge '+s.badge+'">'+s.txt+'</span>';
+  document.getElementById('ficha-cli-datos').innerHTML =
+    '<div><div class="dato-lbl">CUIT</div><div class="dato-val">'+(c.cuit||'\u2014')+'</div></div>'+
+    '<div><div class="dato-lbl">Tel\u00e9fono</div><div class="dato-val">'+(c.telefono||'\u2014')+'</div></div>'+
+    '<div><div class="dato-lbl">Localidad</div><div class="dato-val">'+(c.localidad||'\u2014')+'</div></div>'+
+    '<div><div class="dato-lbl">Provincia</div><div class="dato-val">'+(c.provincia||'\u2014')+'</div></div>'+
+    '<div style="grid-column:span 2"><div class="dato-lbl">Domicilio</div><div class="dato-val">'+(c.domicilio||'\u2014')+'</div></div>';
+  const el = document.getElementById('ficha-cli-gestiones');
+  el.innerHTML = '<div class="loading">Cargando...</div>';
+  openModal('modal-ficha');
+  try {
+    const gest = await sb('gestiones?cliente_id=eq.'+c.id+'&order=fecha_contacto.desc');
+    if(!gest||!gest.length){ el.innerHTML='<div class="empty-state">Sin gestiones registradas</div>'; return; }
+    el.innerHTML = gest.map(function(g){
+      const res = g.resultado==='va_a_comprar'?'Va a comprar':g.resultado==='lo_analiza'?'Lo va a analizar':'No va a comprar';
+      const badge = g.resultado==='va_a_comprar'?'badge-green':g.resultado==='lo_analiza'?'badge-amber':'badge-red';
+      return '<div class="gestion-item">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start">'+
+          '<div>'+
+            '<span style="font-size:12px;font-weight:700;color:var(--muted)">'+fmt(g.fecha_contacto)+'</span>'+
+            '<span class="badge badge-gray" style="margin-left:6px">'+(g.tipo_contacto||'')+'</span>'+
+          '</div>'+
+          '<span class="badge '+badge+'">'+res+'</span>'+
+        '</div>'+
+        '<div style="font-size:12px;color:var(--muted);margin-top:4px">'+
+          (g.rubro?'<span class="badge badge-blue" style="margin-right:4px">'+g.rubro+'</span>':'')+
+          (g.fecha_ultimo_pedido?'\ud83d\udce6 \u00daltimo pedido: '+fmt(g.fecha_ultimo_pedido)+'<br>':'')+
+          (g.motivo_no_compra?'Motivo: '+g.motivo_no_compra+(g.motivo_competencia?' \u00b7 '+g.motivo_competencia:'')+'<br>':'')+
+          (g.comentarios?'\ud83d\udcac '+g.comentarios:'')+
+        '</div>'+
+      '</div>';
+    }).join('');
+  } catch(e){ el.innerHTML='<div class="empty-state">Error al cargar</div>'; }
 }
 
 function filtrarModalClientes(){
