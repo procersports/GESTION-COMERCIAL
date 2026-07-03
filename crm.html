@@ -195,9 +195,13 @@ textarea{resize:vertical;min-height:70px}
       </div>
     </div>
     <div class="main-content">
-      <div class="tabs">
-        <button class="tab-btn active" onclick="showTab('clientes')">Mis clientes</button>
-        <button class="tab-btn" onclick="showTab('novedades')">Novedades</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);margin-bottom:1.25rem">
+        <div class="tabs" style="border-bottom:none;margin-bottom:0">
+          <button class="tab-btn active" onclick="showTab('clientes')">Mis clientes</button>
+          <button class="tab-btn" onclick="showTab('novedades')">Novedades</button>
+          <button class="tab-btn" onclick="showTab('mis-datos')">Mis datos</button>
+        </div>
+        <button class="btn btn-sm" onclick="mostrarNuevoCliente()" style="margin-bottom:4px">+ Nuevo cliente</button>
       </div>
 
       <!-- TAB CLIENTES -->
@@ -218,7 +222,33 @@ textarea{resize:vertical;min-height:70px}
           </div>
           <div id="lista-clientes"><div class="loading">Cargando...</div></div>
         </div>
-        <button class="btn btn-outline" style="width:100%;margin-top:.5rem" onclick="mostrarNuevoCliente()">+ Agregar cliente nuevo</button>
+      </div>
+
+      <!-- TAB MIS DATOS -->
+      <div id="tab-mis-datos" style="display:none">
+        <div class="card">
+          <div class="card-title">Mis datos</div>
+          <div class="datos-grid" style="margin-bottom:1rem" id="mis-datos-vista"></div>
+          <button class="btn btn-outline btn-sm" onclick="toggleEditMisDatos()">✏️ Editar mis datos</button>
+          <div id="form-mis-datos" style="display:none;margin-top:1rem">
+            <div class="form-block">
+              <div class="form-block-title">Editar mis datos</div>
+              <div class="row2">
+                <div class="field"><label>Nombre</label><input type="text" id="md-nombre" readonly></div>
+                <div class="field"><label>Apellido</label><input type="text" id="md-apellido" readonly></div>
+              </div>
+              <div class="row2">
+                <div class="field"><label>Teléfono / Celular</label><input type="text" id="md-cel" placeholder="+54 9 ...."></div>
+                <div class="field"><label>Mail</label><input type="text" id="md-mail" placeholder="mail@ejemplo.com"></div>
+              </div>
+              <div class="err-msg" id="md-err"></div>
+              <div style="display:flex;gap:8px;margin-top:.5rem">
+                <button class="btn btn-sm" onclick="guardarMisDatos()">Guardar</button>
+                <button class="btn btn-outline btn-sm" onclick="toggleEditMisDatos()">Cancelar</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- TAB NOVEDADES -->
@@ -602,9 +632,44 @@ function renderClientes(){
 
 // ─── TABS ────────────────────────────────────────────────────
 function showTab(name){
-  document.querySelectorAll('.tab-btn').forEach((t,i)=>t.classList.toggle('active',['clientes','novedades'][i]===name));
+  document.querySelectorAll('.tab-btn').forEach((t,i)=>t.classList.toggle('active',['clientes','novedades','mis-datos'][i]===name));
   document.getElementById('tab-clientes').style.display=name==='clientes'?'block':'none';
   document.getElementById('tab-novedades').style.display=name==='novedades'?'block':'none';
+  document.getElementById('tab-mis-datos').style.display=name==='mis-datos'?'block':'none';
+  if(name==='mis-datos') renderMisDatos();
+}
+
+function renderMisDatos(){
+  const v = usuario;
+  document.getElementById('mis-datos-vista').innerHTML = `
+    <div><div class="dato-lbl">Nombre</div><div class="dato-val">${v.nombre} ${v.apellido}</div></div>
+    <div><div class="dato-lbl">Código</div><div class="dato-val">${v.codigo}</div></div>
+    <div><div class="dato-lbl">Teléfono</div><div class="dato-val">${v.cel||'—'}</div></div>
+    <div><div class="dato-lbl">Mail</div><div class="dato-val">${v.mail||'—'}</div></div>
+  `;
+  document.getElementById('md-nombre').value = v.nombre||'';
+  document.getElementById('md-apellido').value = v.apellido||'';
+  document.getElementById('md-cel').value = v.cel||''  ;
+  document.getElementById('md-mail').value = v.mail||'';
+}
+
+function toggleEditMisDatos(){
+  const f = document.getElementById('form-mis-datos');
+  f.style.display = f.style.display==='none'?'block':'none';
+}
+
+async function guardarMisDatos(){
+  const data = {
+    cel: document.getElementById('md-cel').value.trim()||null,
+    mail: document.getElementById('md-mail').value.trim()||null,
+  };
+  try {
+    await sb(`vendedores?id=eq.${usuario.id}`, { method:'PATCH', body: JSON.stringify(data), headers:{Prefer:'return=minimal'} });
+    Object.assign(usuario, data);
+    sessionStorage.setItem('crm_usuario', JSON.stringify(usuario));
+    toggleEditMisDatos();
+    renderMisDatos();
+  } catch(e){ showErr('md-err','Error al guardar: '+e.message); }
 }
 
 // ─── NOVEDADES ───────────────────────────────────────────────
