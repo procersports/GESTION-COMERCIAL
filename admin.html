@@ -237,10 +237,17 @@ textarea{resize:vertical;min-height:80px}
     </div>
     <div class="field"><label>Título *</label><input type="text" id="nov-titulo" placeholder="Título de la novedad"></div>
     <div class="field"><label>Contenido</label><textarea id="nov-contenido" placeholder="Descripción, instrucciones, información..."></textarea></div>
-    <div class="field"><label>URL de imagen (opcional)</label><input type="text" id="nov-imagen" placeholder="https://..."></div>
+    <div class="field">
+      <label>Imagen o archivo (opcional)</label>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <input type="file" id="nov-archivo" accept="image/*,.pdf" style="font-size:13px;padding:6px">
+        <div style="font-size:11px;color:var(--muted);text-align:center">— o ingresá una URL —</div>
+        <input type="text" id="nov-imagen" placeholder="https://... (URL de imagen)">
+      </div>
+    </div>
     <div class="err-msg" id="nov-err"></div>
     <div style="display:flex;gap:8px;margin-top:.5rem">
-      <button class="btn btn-sm" onclick="guardarNovedad()">Publicar</button>
+      <button class="btn btn-sm" id="btn-publicar" onclick="guardarNovedad()">Publicar</button>
       <button class="btn btn-outline btn-sm" onclick="closeModal('modal-novedad')">Cancelar</button>
     </div>
   </div>
@@ -548,18 +555,43 @@ function openModalNovedad(){
   document.getElementById('nov-titulo').value='';
   document.getElementById('nov-contenido').value='';
   document.getElementById('nov-imagen').value='';
+  document.getElementById('nov-archivo').value='';
   hideErr('nov-err');
   openModal('modal-novedad');
+}
+
+async function subirArchivo(file){
+  const nombre = Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+  const res = await fetch(`${SB}/storage/v1/object/novedades/${nombre}`, {
+    method: 'POST',
+    headers: { 'apikey': KEY, 'Authorization': `Bearer ${KEY}`, 'Content-Type': file.type },
+    body: file
+  });
+  if(!res.ok) throw new Error('Error al subir archivo');
+  return `${SB}/storage/v1/object/public/novedades/${nombre}`;
 }
 
 async function guardarNovedad(){
   const titulo = document.getElementById('nov-titulo').value.trim();
   if(!titulo){ showErr('nov-err','El título es obligatorio'); return; }
+  hideErr('nov-err');
+  const btn = document.getElementById('btn-publicar');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>';
+
+  let imagen_url = document.getElementById('nov-imagen').value.trim()||null;
+
+  // Si hay archivo subido, usarlo
+  const archivo = document.getElementById('nov-archivo').files[0];
+  if(archivo){
+    try { imagen_url = await subirArchivo(archivo); }
+    catch(e){ showErr('nov-err','Error al subir imagen: '+e.message); btn.disabled=false; btn.innerHTML='Publicar'; return; }
+  }
+
   const data = {
     codigo_vendedor: document.getElementById('nov-vendedor').value,
     titulo,
     contenido: document.getElementById('nov-contenido').value.trim()||null,
-    imagen_url: document.getElementById('nov-imagen').value.trim()||null,
+    imagen_url,
     estado: 'pendiente'
   };
   try {
@@ -567,6 +599,7 @@ async function guardarNovedad(){
     closeModal('modal-novedad');
     cargarNovedades();
   } catch(e){ showErr('nov-err','Error: '+e.message); }
+  finally { btn.disabled=false; btn.innerHTML='Publicar'; }
 }
 
 async function borrarNovedad(id){
