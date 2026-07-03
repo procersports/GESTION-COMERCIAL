@@ -448,19 +448,29 @@ textarea{resize:vertical;min-height:70px}
     <div class="main-content">
       <div class="card">
         <div class="card-title">Nuevo cliente</div>
+
+        <div class="form-block-title" style="margin-bottom:.75rem">Datos de la empresa</div>
         <div class="field"><label>Nombre / Razón social *</label><input type="text" id="nc-nombre" placeholder="Ej: Deportes San Martín"></div>
         <div class="row2">
           <div class="field"><label>CUIT</label><input type="text" id="nc-cuit" placeholder="30-00000000-0"></div>
           <div class="field"><label>Teléfono</label><input type="text" id="nc-tel" placeholder="Teléfono"></div>
         </div>
+        <div class="field"><label>Mail</label><input type="text" id="nc-mail" placeholder="mail@empresa.com"></div>
         <div class="field"><label>Domicilio</label><input type="text" id="nc-dom" placeholder="Calle y número"></div>
         <div class="row3">
           <div class="field"><label>Código postal</label><input type="text" id="nc-cp" placeholder="CP"></div>
           <div class="field"><label>Localidad</label><input type="text" id="nc-loc" placeholder="Localidad"></div>
           <div class="field"><label>Provincia</label><input type="text" id="nc-prov" placeholder="Provincia"></div>
         </div>
+
+        <div style="margin-top:1.25rem;margin-bottom:.75rem;display:flex;justify-content:space-between;align-items:center">
+          <div class="form-block-title" style="margin-bottom:0">Contactos internos</div>
+          <button type="button" class="btn btn-outline btn-sm" onclick="agregarFilaContacto()">+ Agregar contacto</button>
+        </div>
+        <div id="nc-contactos"></div>
+
         <div class="err-msg" id="nc-err"></div>
-        <button class="btn" style="margin-top:.5rem" onclick="guardarNuevoCliente()">Guardar cliente</button>
+        <button class="btn" style="margin-top:.75rem" onclick="guardarNuevoCliente()">Guardar cliente</button>
       </div>
     </div>
   </div>
@@ -941,6 +951,48 @@ function mostrarNuevoCliente(){
   show('screen-nuevo-cliente');
 }
 
+let ncContactos = [];
+
+function agregarFilaContacto(){
+  const id = Date.now();
+  ncContactos.push(id);
+  const div = document.createElement('div');
+  div.id = 'nc-ci-'+id;
+  div.className = 'form-block';
+  div.style.marginBottom = '.75rem';
+  div.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">
+      <div class="form-block-title" style="margin-bottom:0">Contacto</div>
+      <button type="button" class="btn-ghost" style="color:var(--red);font-size:12px" onclick="quitarContacto(${id})">✕ Quitar</button>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Nombre</label><input type="text" id="nc-ci-nom-${id}" placeholder="Nombre"></div>
+      <div class="field"><label>Apellido</label><input type="text" id="nc-ci-ape-${id}" placeholder="Apellido"></div>
+    </div>
+    <div class="field"><label>Cargo / Función</label>
+      <select id="nc-ci-cargo-${id}">
+        <option value="">Seleccionar...</option>
+        <option>Dueño/a</option><option>Encargado/a</option><option>Compras</option>
+        <option>Pagos</option><option>Entregas</option><option>Otro</option>
+      </select>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Celular / Tel</label><input type="text" id="nc-ci-cel-${id}" placeholder="+54 9..."></div>
+      <div class="field"><label>Mail</label><input type="text" id="nc-ci-mail-${id}" placeholder="mail@ejemplo.com"></div>
+    </div>
+    <div class="field" style="display:flex;align-items:center;gap:8px">
+      <input type="checkbox" id="nc-ci-princ-${id}" style="width:auto">
+      <label for="nc-ci-princ-${id}" style="margin:0;cursor:pointer;font-size:13px">Contacto principal</label>
+    </div>
+  `;
+  document.getElementById('nc-contactos').appendChild(div);
+}
+
+function quitarContacto(id){
+  ncContactos = ncContactos.filter(x=>x!==id);
+  document.getElementById('nc-ci-'+id).remove();
+}
+
 async function guardarNuevoCliente(){
   const nombre = document.getElementById('nc-nombre').value.trim();
   if(!nombre){ showErr('nc-err','El nombre es obligatorio'); return; }
@@ -949,6 +1001,7 @@ async function guardarNuevoCliente(){
     nombre,
     cuit: document.getElementById('nc-cuit').value.trim()||null,
     telefono: document.getElementById('nc-tel').value.trim()||null,
+    mail: document.getElementById('nc-mail').value.trim()||null,
     domicilio: document.getElementById('nc-dom').value.trim()||null,
     codigo_postal: document.getElementById('nc-cp').value.trim()||null,
     localidad: document.getElementById('nc-loc').value.trim()||null,
@@ -956,8 +1009,33 @@ async function guardarNuevoCliente(){
     codigo_vendedor: usuario.codigo
   };
   try {
-    await sb('clientes', { method:'POST', body: JSON.stringify(data), headers:{Prefer:'return=minimal'} });
-    ['nc-nombre','nc-cuit','nc-tel','nc-dom','nc-cp','nc-loc','nc-prov'].forEach(id=>document.getElementById(id).value='');
+    // Guardar cliente y obtener id
+    const res = await fetch(`${SB}/rest/v1/clientes`, {
+      method:'POST',
+      headers:{ 'apikey':KEY, 'Authorization':`Bearer ${KEY}`, 'Content-Type':'application/json', 'Prefer':'return=representation' },
+      body: JSON.stringify(data)
+    });
+    if(!res.ok) throw new Error(await res.text());
+    const [cliente] = await res.json();
+
+    // Guardar contactos internos
+    for(const id of ncContactos){
+      const ci = {
+        cliente_id: cliente.id,
+        nombre: document.getElementById(`nc-ci-nom-${id}`).value.trim()||null,
+        apellido: document.getElementById(`nc-ci-ape-${id}`).value.trim()||null,
+        cargo: document.getElementById(`nc-ci-cargo-${id}`).value||null,
+        telefono: document.getElementById(`nc-ci-cel-${id}`).value.trim()||null,
+        mail: document.getElementById(`nc-ci-mail-${id}`).value.trim()||null,
+        es_principal: document.getElementById(`nc-ci-princ-${id}`).checked
+      };
+      if(ci.nombre) await sb('contactos_cliente', { method:'POST', body: JSON.stringify(ci), headers:{Prefer:'return=minimal'} });
+    }
+
+    // Limpiar
+    ['nc-nombre','nc-cuit','nc-tel','nc-mail','nc-dom','nc-cp','nc-loc','nc-prov'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('nc-contactos').innerHTML='';
+    ncContactos=[];
     await cargarDatos();
     volverAClientes();
   } catch(e){ showErr('nc-err','Error al guardar: '+e.message); }
