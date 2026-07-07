@@ -767,8 +767,28 @@ async function guardarNuevoPedido(){
 
   try {
     await sb('pedidos',{method:'POST',body:JSON.stringify(data),headers:{Prefer:'return=minimal'}});
+
+    // Buscar el cliente en la tabla clientes para crear la gestion automatica
+    const clientesMatch = await sb('clientes?nombre=eq.'+encodeURIComponent(data.cliente)+'&codigo_vendedor=eq.'+data.codigo_vendedor);
+    if(clientesMatch && clientesMatch.length > 0){
+      const clienteId = clientesMatch[0].id;
+      const gestion = {
+        cliente_id: clienteId,
+        codigo_vendedor: data.codigo_vendedor,
+        fecha_contacto: data.fecha_recibido,
+        tipo_contacto: 'Pedido',
+        resultado: 'compro',
+        rubro: data.rubro||null,
+        fecha_compra: data.fecha_recibido,
+        comentarios: 'Pedido recibido' + (data.numero ? ' Nº '+data.numero : '')
+      };
+      await sb('gestiones',{method:'POST',body:JSON.stringify(gestion),headers:{Prefer:'return=minimal'}});
+    }
+
     closeModal('modal-nuevo-pedido');
     cargarPedidos();
+    // Recargar datos para actualizar semaforos
+    await cargarTodo();
   } catch(e){ showErr('np-err','Error: '+e.message); }
   finally{ btn.disabled=false; btn.innerHTML='Guardar pedido'; }
 }
