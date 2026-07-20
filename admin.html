@@ -127,6 +127,7 @@ textarea{resize:vertical;min-height:80px}
         <button class="tab-btn" onclick="showTab('vendedores')">Vendedores</button>
         <button class="tab-btn" onclick="showTab('novedades')">Novedades</button>
         <button class="tab-btn" onclick="showTab('pedidos')">Pedidos</button>
+        <button class="tab-btn" onclick="showTab('geografia')">Clientes por zona</button>
       </div>
 
       <!-- RESUMEN -->
@@ -154,6 +155,7 @@ textarea{resize:vertical;min-height:80px}
 
       <!-- PEDIDOS -->
       <div id="tab-pedidos" style="display:none">
+        <div id="metricas-pedidos" style="display:grid;grid-template-columns:repeat(6,1fr);gap:.6rem;margin-bottom:1rem"></div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem">
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn btn-sm" style="background:#3B82F6" onclick="filtrarPedidos('')">Todos</button>
@@ -166,6 +168,21 @@ textarea{resize:vertical;min-height:80px}
           <button class="btn btn-sm" onclick="openModalNuevoPedido()">+ Nuevo pedido</button>
         </div>
         <div id="lista-pedidos"><div class="loading">Cargando...</div></div>
+      </div>
+
+      <!-- GEOGRAFIA -->
+      <div id="tab-geografia" style="display:none">
+        <div class="card">
+          <div class="card-title">Clientes por provincia</div>
+          <div id="grafico-provincias"></div>
+        </div>
+        <div class="card" id="card-localidades" style="display:none">
+          <div class="card-title">
+            <span id="titulo-localidades">Localidades</span>
+            <button class="btn btn-outline btn-sm" onclick="volverProvincias()">← Volver</button>
+          </div>
+          <div id="grafico-localidades"></div>
+        </div>
       </div>
 
       <!-- NOVEDADES -->
@@ -445,9 +462,10 @@ function actualizarMetricas(){
 
 // ─── TABS ────────────────────────────────────────────────────
 function showTab(name){
-  document.querySelectorAll('.tab-btn').forEach((t,i)=>t.classList.toggle('active',['resumen','vendedores','novedades','pedidos'][i]===name));
-  ['resumen','vendedores','novedades','pedidos'].forEach(t=>document.getElementById('tab-'+t).style.display=t===name?'block':'none');
+  document.querySelectorAll('.tab-btn').forEach((t,i)=>t.classList.toggle('active',['resumen','vendedores','novedades','pedidos','geografia'][i]===name));
+  ['resumen','vendedores','novedades','pedidos','geografia'].forEach(t=>document.getElementById('tab-'+t).style.display=t===name?'block':'none');
   if(name==='pedidos') cargarPedidos();
+  if(name==='geografia') renderGraficoProvincias();
 }
 
 // ─── RESUMEN ─────────────────────────────────────────────────
@@ -522,6 +540,7 @@ function renderVendedores(){
         </div>
         <div style="display:flex;gap:6px">
           <button class="btn btn-outline btn-sm" onclick="editarClaveVendedor('${v.id}','${v.nombre} ${v.apellido}','${v.clave}')">🔑 Clave</button>
+          <button class="btn btn-danger btn-sm" onclick="resetearClave('${v.id}','${v.apellido}','${v.nombre} ${v.apellido}')">↺ Resetear</button>
           <button class="btn btn-sm" onclick="verClientesVendedor('${v.codigo}','${v.nombre} ${v.apellido}')">Ver clientes</button>
         </div>
       </div>
@@ -653,6 +672,79 @@ function guardarClaveAdmin(){
   alert('✅ Clave de administrador actualizada');
 }
 
+// ─── RESETEAR CLAVE ─────────────────────────────────────────
+async function resetearClave(id, apellido, nombreCompleto){
+  if(!confirm('¿Resetear la clave de '+nombreCompleto+' a su apellido en mayúsculas ('+apellido.toUpperCase()+')?')) return;
+  try {
+    await sb('vendedores?id=eq.'+id, {method:'PATCH', body: JSON.stringify({clave: apellido.toUpperCase()}), headers:{Prefer:'return=minimal'}});
+    const v = vendedores.find(x=>x.id==id);
+    if(v) v.clave = apellido.toUpperCase();
+    renderVendedores();
+    alert('✅ Clave reseteada a: '+apellido.toUpperCase());
+  } catch(e){ alert('Error: '+e.message); }
+}
+
+// ─── GEOGRAFIA ───────────────────────────────────────────────
+function renderGraficoProvincias(){
+  document.getElementById('card-localidades').style.display='none';
+  const el = document.getElementById('grafico-provincias');
+  const provincias = {};
+  clientes.forEach(function(c){
+    const p = c.provincia||'Sin provincia';
+    provincias[p] = (provincias[p]||0)+1;
+  });
+  const sorted = Object.entries(provincias).sort(function(a,b){return b[1]-a[1];});
+  const max = sorted[0] ? sorted[0][1] : 1;
+  const colores = ['#1B4F8A','#3B82F6','#22C55E','#F97316','#8B5CF6','#EAB308','#EC4899','#14B8A6','#F43F5E','#84CC16'];
+  el.innerHTML = sorted.map(function(item, i){
+    const prov = item[0]; const cant = item[1];
+    const pct = Math.round((cant/max)*100);
+    const color = colores[i%colores.length];
+    return '<div style="margin-bottom:.6rem;cursor:pointer" onclick="verLocalidades(''+prov.replace(/'/g,"\\'")+'')">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">'+
+        '<span style="font-size:13px;font-weight:600">'+prov+'</span>'+
+        '<span style="font-size:12px;color:var(--muted)">'+cant+' clientes</span>'+
+      '</div>'+
+      '<div style="background:#f0f0ee;border-radius:6px;height:24px;overflow:hidden">'+
+        '<div style="background:'+color+';width:'+pct+'%;height:100%;border-radius:6px;display:flex;align-items:center;padding-left:8px">'+
+          '<span style="font-size:11px;color:#fff;font-weight:700">'+pct+'%</span>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function verLocalidades(provincia){
+  document.getElementById('titulo-localidades').textContent = 'Localidades - '+provincia;
+  document.getElementById('card-localidades').style.display='block';
+  const localidades = {};
+  clientes.filter(function(c){return (c.provincia||'Sin provincia')===provincia;}).forEach(function(c){
+    const l = c.localidad||'Sin localidad';
+    localidades[l] = (localidades[l]||0)+1;
+  });
+  const sorted = Object.entries(localidades).sort(function(a,b){return b[1]-a[1];});
+  const max = sorted[0] ? sorted[0][1] : 1;
+  const el = document.getElementById('grafico-localidades');
+  el.innerHTML = sorted.map(function(item){
+    const loc = item[0]; const cant = item[1];
+    const pct = Math.round((cant/max)*100);
+    return '<div style="margin-bottom:.5rem">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">'+
+        '<span style="font-size:13px">'+loc+'</span>'+
+        '<span style="font-size:12px;color:var(--muted)">'+cant+' cliente'+(cant>1?'s':'')+'</span>'+
+      '</div>'+
+      '<div style="background:#f0f0ee;border-radius:5px;height:20px;overflow:hidden">'+
+        '<div style="background:#1B4F8A;width:'+pct+'%;height:100%;border-radius:5px"></div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  document.getElementById('card-localidades').scrollIntoView({behavior:'smooth'});
+}
+
+function volverProvincias(){
+  document.getElementById('card-localidades').style.display='none';
+}
+
 // ─── PEDIDOS ─────────────────────────────────────────────────
 let pedidosData = [];
 let pedidosFiltro = '';
@@ -687,6 +779,25 @@ function filtrarPedidos(estado){
 }
 
 function renderPedidos(){
+  // Metricas
+  const mel = document.getElementById('metricas-pedidos');
+  if(mel){
+    const total = pedidosData.length;
+    const metItems = [
+      {label:'Total', val:total, color:'#1B4F8A', bg:'#E8EFF8'},
+      {label:'Recibido', val:pedidosData.filter(p=>p.estado==='recibido').length, color:'#3B82F6', bg:'#EFF6FF'},
+      {label:'Cargado', val:pedidosData.filter(p=>p.estado==='cargado').length, color:'#EAB308', bg:'#FEFCE8'},
+      {label:'En proceso', val:pedidosData.filter(p=>p.estado==='proceso').length, color:'#F97316', bg:'#FFF7ED'},
+      {label:'Facturado', val:pedidosData.filter(p=>p.estado==='facturado').length, color:'#8B5CF6', bg:'#F5F3FF'},
+      {label:'Enviado', val:pedidosData.filter(p=>p.estado==='enviado').length, color:'#22C55E', bg:'#F0FDF4'},
+    ];
+    mel.innerHTML = metItems.map(m=>
+      '<div style="background:'+m.bg+';border-radius:8px;padding:.6rem;text-align:center;border:1px solid '+m.color+'33">'+
+      '<div style="font-size:22px;font-weight:700;color:'+m.color+'">'+m.val+'</div>'+
+      '<div style="font-size:10px;color:'+m.color+';font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-top:2px">'+m.label+'</div>'+
+      '</div>'
+    ).join('');
+  }
   const el = document.getElementById('lista-pedidos');
   let lista = pedidosFiltro ? pedidosData.filter(p=>p.estado===pedidosFiltro) : pedidosData;
   if(!lista.length){ el.innerHTML='<div class="empty-state">No hay pedidos</div>'; return; }
