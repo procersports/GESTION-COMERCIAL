@@ -729,7 +729,7 @@ function verLocalidades(provincia){
   el.innerHTML = sorted.map(function(item){
     const loc = item[0]; const cant = item[1];
     const pct = Math.round((cant/max)*100);
-    return '<div style="margin-bottom:.5rem">'+
+    return '<div style="margin-bottom:.5rem;cursor:pointer" data-prov="'+encodeURIComponent(provincia)+'" data-loc="'+encodeURIComponent(loc)+'" onclick="verClientesLocalidad(decodeURIComponent(this.dataset.prov),decodeURIComponent(this.dataset.loc))">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">'+
         '<span style="font-size:13px">'+loc+'</span>'+
         '<span style="font-size:12px;color:var(--muted)">'+cant+' cliente'+(cant>1?'s':'')+'</span>'+
@@ -740,6 +740,16 @@ function verLocalidades(provincia){
     '</div>';
   }).join('');
   document.getElementById('card-localidades').scrollIntoView({behavior:'smooth'});
+}
+  function verClientesLocalidad(provincia, localidad){
+  const lista = clientes.filter(function(c){
+    return (c.provincia||'Sin provincia')===provincia && (c.localidad||'Sin localidad')===localidad;
+  });
+  modalClientesData = lista;
+  document.getElementById('modal-clientes-titulo').textContent = 'Clientes de '+localidad+' ('+provincia+')';
+  document.getElementById('modal-buscar-cli').value='';
+  renderModalClientes(lista);
+  openModal('modal-clientes');
 }
 
 function volverProvincias(){
