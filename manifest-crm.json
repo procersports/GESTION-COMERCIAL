@@ -1,0 +1,14 @@
+{
+  "id": "/GESTION-COMERCIAL/crm.html",
+  "name": "CRM PROCER",
+  "short_name": "CRM PROCER",
+  "start_url": "/GESTION-COMERCIAL/crm.html",
+  "scope": "/GESTION-COMERCIAL/crm.html",
+  "display": "standalone",
+  "background_color": "#F5F4F0",
+  "theme_color": "#1B4F8A",
+  "icons": [
+    { "src": "/GESTION-COMERCIAL/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/GESTION-COMERCIAL/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
